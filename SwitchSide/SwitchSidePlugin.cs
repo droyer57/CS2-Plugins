@@ -1,5 +1,7 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 
@@ -15,6 +17,8 @@ public sealed class SwitchSidePlugin : BasePlugin
     private int _teamAScore;
     private int _teamBScore;
     private bool _teamAIsT = true;
+
+    private bool _isEnable = true;
 
     public override void Load(bool hotReload)
     {
@@ -32,6 +36,11 @@ public sealed class SwitchSidePlugin : BasePlugin
 
     private HookResult OnRoundEnd(EventRoundEnd evt, GameEventInfo info)
     {
+        if (!_isEnable)
+        {
+            return HookResult.Continue;
+        }
+        
         if (_isFirstRound)
         {
             _isFirstRound = false;
@@ -107,6 +116,28 @@ public sealed class SwitchSidePlugin : BasePlugin
         catch (Exception)
         {
             // ignored
+        }
+    }
+    
+    [ConsoleCommand("css_switchside", "Enable or disable switch side plugin")]
+    [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER )]
+    public void OnSwitchSideCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        var arg = command.GetArg(1); // "0" or "1"
+
+        switch (arg)
+        {
+            case "1":
+                _isEnable = true;
+                command.ReplyToCommand("[SwitchSide] Enabled!");
+                break;
+            case "0":
+                _isEnable = false;
+                command.ReplyToCommand("[SwitchSide] Disabled!");
+                break;
+            default:
+                command.ReplyToCommand("[SwitchSide] Usage: css_switchside [0|1]");
+                break;
         }
     }
 }

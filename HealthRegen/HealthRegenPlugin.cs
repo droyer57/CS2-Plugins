@@ -1,4 +1,6 @@
 ﻿using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Commands;
 
 namespace HealthRegen;
 
@@ -96,5 +98,69 @@ public sealed class HealthRegenPlugin : BasePlugin, IPluginConfig<HealthRegenCon
             state.Stop();
 
         return HookResult.Continue;
+    }
+
+    [ConsoleCommand("css_healthregen", "Enable or disable health regeneration")]
+    [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnHealthRegenCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        var arg = command.GetArg(1); // "0" or "1"
+
+        switch (arg)
+        {
+            case "1":
+                Config.Enable = true;
+                command.ReplyToCommand("[HealthRegen] Enabled!");
+                break;
+            case "0":
+                Config.Enable = false;
+                command.ReplyToCommand("[HealthRegen] Disabled!");
+                break;
+            default:
+                command.ReplyToCommand("[HealthRegen] Usage: css_healthregen [0|1]");
+                break;
+        }
+    }
+
+    [ConsoleCommand("css_healthregen_startregendelay", "Get or set the start regen delay")]
+    [CommandHelper(minArgs: 0, whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnStartRegenDelayCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        if (command.ArgCount < 2)
+        {
+            command.ReplyToCommand($"css_healthregen_startregendelay = {Config.StartRegenDelay}");
+            return;
+        }
+
+        if (int.TryParse(command.GetArg(1), out var value))
+        {
+            Config.StartRegenDelay = value;
+            command.ReplyToCommand($"css_healthregen_startregendelay = {value}");
+        }
+        else
+        {
+            command.ReplyToCommand("Invalid value. Usage: css_healthregen_startregendelay [int]");
+        }
+    }
+
+    [ConsoleCommand("css_healthregen_timetoheal", "Get or set the time to heal")]
+    [CommandHelper(minArgs: 0, whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnTimeToHealCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        if (command.ArgCount < 2)
+        {
+            command.ReplyToCommand($"css_healthregen_timetoheal = {Config.TimeToHeal}");
+            return;
+        }
+
+        if (int.TryParse(command.GetArg(1), out var value))
+        {
+            Config.TimeToHeal = value;
+            command.ReplyToCommand($"css_healthregen_timetoheal = {value}");
+        }
+        else
+        {
+            command.ReplyToCommand("Invalid value. Usage: css_healthregen_timetoheal [int]");
+        }
     }
 }
