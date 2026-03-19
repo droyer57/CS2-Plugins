@@ -4,6 +4,7 @@
   <Project Path="BotState/BotState.csproj" />
   <Project Path="C4Timer/C4Timer.csproj" />
   <Project Path="HealthRegen/HealthRegen.csproj" />
+  <Project Path="InfiniteAmmo/InfiniteAmmo.csproj" />
   <Project Path="NoTagging/NoTagging.csproj" />
   <Project Path="SkinChanger/SkinChanger.csproj" />
   <Project Path="SwitchSide/SwitchSide.csproj" />
