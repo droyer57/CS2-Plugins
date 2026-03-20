@@ -180,6 +180,8 @@ public sealed class BotRandomizerPlugin : BasePlugin
                 if (pawn == null || !pawn.IsValid) return;
                 var model = (CsTeam)pawn.TeamNum == CsTeam.Terrorist ? models[0] : models[1];
                 pawn.SetModel(model);
+                Utilities.SetStateChanged(pawn, "CBaseEntity", "m_CBodyComponent");
+                pawn.AcceptInput("Skin", pawn, pawn, "0");
                 var c = pawn.Render;
                 pawn.Render = Color.FromArgb(255, c.R, c.G, c.B);
                 Utilities.SetStateChanged(pawn, "CBaseModelEntity", "m_clrRender");
