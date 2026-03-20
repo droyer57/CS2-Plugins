@@ -55,7 +55,30 @@ public sealed class SwitchSidePlugin : BasePlugin
         }
 
         var totalScore = _teamAScore + _teamBScore;
-        if (totalScore > stopScore && !_hasReset)
+        bool canTellReset;
+        if (stopScore % 2 == 0)
+            canTellReset = totalScore == stopScore;
+        else
+            canTellReset = totalScore == stopScore - 1;
+        
+        if (canTellReset)
+        {
+            foreach (var player in Utilities.GetPlayers())
+            {
+                Server.NextFrame(() =>
+                {
+                    player.PrintToCenterAlert("Inventory reset next round !");
+                });
+            }
+        }
+
+        bool canReset;
+        if (stopScore % 2 == 0)
+            canReset = totalScore == stopScore + 1;
+        else
+            canReset = totalScore == stopScore;
+
+        if (canReset && !_hasReset)
         {
             _hasReset = true;
 
