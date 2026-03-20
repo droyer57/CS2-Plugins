@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="BotAI/BotAI.csproj" />
   <Project Path="BotInfiniteMoney/BotInfiniteMoney.csproj" />
   <Project Path="BotRandomizer/BotRandomizer.csproj" />
   <Project Path="BotState/BotState.csproj" />
