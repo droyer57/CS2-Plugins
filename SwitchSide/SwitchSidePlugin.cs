@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
+using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 
@@ -21,6 +22,7 @@ public sealed class SwitchSidePlugin : BasePlugin
     private bool _isEnable = true;
 
     private int _maxRounds = 11;
+    private bool _hasReset;
 
     public override void Load(bool hotReload)
     {
@@ -35,10 +37,16 @@ public sealed class SwitchSidePlugin : BasePlugin
         _teamAIsT = true;
         _teamAScore = 0;
         _teamBScore = 0;
+        _hasReset = false;
     }
 
     private HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
     {
+        if (!_isEnable)
+        {
+            return HookResult.Continue;
+        }
+
         var stopScore = _maxRounds / 2;
         if (_teamAScore == stopScore || _teamBScore == stopScore)
         {
@@ -46,7 +54,40 @@ public sealed class SwitchSidePlugin : BasePlugin
             matchPointEvent.FireEvent(false);
         }
 
+        var totalScore = _teamAScore + _teamBScore;
+        if (totalScore > stopScore && !_hasReset)
+        {
+            _hasReset = true;
+
+            foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+            {
+                ResetPlayer(player);
+            }
+        }
+
         return HookResult.Continue;
+    }
+
+    private void ResetPlayer(CCSPlayerController player)
+    {
+        var itemServices = player.Pawn.Value?.ItemServices?.As<CCSPlayer_ItemServices>();
+        itemServices?.RemoveWeapons();
+
+        player.GiveNamedItem("weapon_knife");
+        player.GiveNamedItem(player.Team == CsTeam.Terrorist ? "weapon_glock" : "weapon_usp_silencer");
+
+        var playerMoney = player.InGameMoneyServices;
+        if (playerMoney == null)
+            return;
+
+        var startMoney = ConVar.Find("mp_startmoney");
+        var money = startMoney?.GetPrimitiveValue<int>() ?? 800;
+
+        Server.NextFrame(() =>
+        {
+            playerMoney.Account = money;
+            Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
+        });
     }
 
     private HookResult OnRoundEnd(EventRoundEnd evt, GameEventInfo info)
@@ -141,6 +182,8 @@ public sealed class SwitchSidePlugin : BasePlugin
         }
     }
 
+    #region Commands
+
     [ConsoleCommand("css_switchside", "Enable or disable switch side plugin")]
     [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
     public void OnSwitchSideCommand(CCSPlayerController? player, CommandInfo command)
@@ -183,4 +226,6 @@ public sealed class SwitchSidePlugin : BasePlugin
             command.ReplyToCommand("Invalid value. Usage: css_switchside_maxrounds [int]");
         }
     }
+
+    #endregion
 }
