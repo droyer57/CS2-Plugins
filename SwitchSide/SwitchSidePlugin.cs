@@ -20,8 +20,11 @@ public sealed class SwitchSidePlugin : BasePlugin
 
     private bool _isEnable = true;
 
+    private int _maxRounds = 11;
+
     public override void Load(bool hotReload)
     {
+        RegisterEventHandler<EventRoundStart>(OnRoundStart);
         RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
         RegisterListener<Listeners.OnMapStart>(_ => Reset());
     }
@@ -34,13 +37,25 @@ public sealed class SwitchSidePlugin : BasePlugin
         _teamBScore = 0;
     }
 
+    private HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
+    {
+        var stopScore = _maxRounds / 2;
+        if (_teamAScore == stopScore || _teamBScore == stopScore)
+        {
+            var matchPointEvent = new EventRoundAnnounceMatchPoint(true);
+            matchPointEvent.FireEvent(false);
+        }
+
+        return HookResult.Continue;
+    }
+
     private HookResult OnRoundEnd(EventRoundEnd evt, GameEventInfo info)
     {
         if (!_isEnable)
         {
             return HookResult.Continue;
         }
-        
+
         if (_isFirstRound)
         {
             _isFirstRound = false;
@@ -56,6 +71,13 @@ public sealed class SwitchSidePlugin : BasePlugin
         }
 
         UpdateScore();
+
+        var stopScore = _maxRounds / 2;
+        if (_teamAScore > stopScore || _teamBScore > stopScore)
+        {
+            Server.ExecuteCommand("mp_maxrounds 0");
+            return HookResult.Continue;
+        }
 
         AddTimer(6.9f, () =>
         {
@@ -118,9 +140,9 @@ public sealed class SwitchSidePlugin : BasePlugin
             // ignored
         }
     }
-    
+
     [ConsoleCommand("css_switchside", "Enable or disable switch side plugin")]
-    [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER )]
+    [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
     public void OnSwitchSideCommand(CCSPlayerController? player, CommandInfo command)
     {
         var arg = command.GetArg(1); // "0" or "1"
@@ -138,6 +160,27 @@ public sealed class SwitchSidePlugin : BasePlugin
             default:
                 command.ReplyToCommand("[SwitchSide] Usage: css_switchside [0|1]");
                 break;
+        }
+    }
+
+    [ConsoleCommand("css_switchside_maxrounds", "Get or set the max rounds")]
+    [CommandHelper(minArgs: 0, whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnMaxRoundsCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        if (command.ArgCount < 2)
+        {
+            command.ReplyToCommand($"css_switchside_maxrounds = {_maxRounds}");
+            return;
+        }
+
+        if (int.TryParse(command.GetArg(1), out var value))
+        {
+            _maxRounds = value;
+            command.ReplyToCommand($"css_switchside_maxrounds = {value}");
+        }
+        else
+        {
+            command.ReplyToCommand("Invalid value. Usage: css_switchside_maxrounds [int]");
         }
     }
 }
