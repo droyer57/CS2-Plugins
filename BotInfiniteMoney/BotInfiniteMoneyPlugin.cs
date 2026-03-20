@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
 
 namespace BotInfiniteMoney;
 
@@ -13,7 +14,6 @@ public sealed class BotInfiniteMoneyPlugin : BasePlugin
 
     public override void Load(bool hotReload)
     {
-        RegisterEventHandler<EventRoundStart>(OnRoundStart);
         RegisterListener<Listeners.OnMapStart>(_ => Reset());
     }
 
@@ -26,17 +26,17 @@ public sealed class BotInfiniteMoneyPlugin : BasePlugin
         _roundCount = 0;
     }
 
-    private HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
+    [GameEventHandler]
+    public HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
     {
         _roundCount++;
-        if (_roundCount <= 2)
+        if (_roundCount <= 1)
         {
             return HookResult.Continue;
         }
 
-        // Small delay to ensure players are fully spawned before setting money
-        // AddTimer(0.1f, GiveMoneyToBots);
         GiveMoneyToBots();
+
         return HookResult.Continue;
     }
 
