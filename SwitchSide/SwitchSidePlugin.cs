@@ -60,16 +60,17 @@ public sealed class SwitchSidePlugin : BasePlugin
             canTellReset = totalScore == stopScore;
         else
             canTellReset = totalScore == stopScore - 1;
-        
+
         if (canTellReset)
         {
-            foreach (var player in Utilities.GetPlayers())
+            Server.NextFrame(() =>
             {
-                Server.NextFrame(() =>
+                Server.PrintToChatAll("Inventory reset next round !");
+                foreach (var player in Utilities.GetPlayers())
                 {
                     player.PrintToCenterAlert("Inventory reset next round !");
-                });
-            }
+                }
+            });
         }
 
         bool canReset;
@@ -96,19 +97,23 @@ public sealed class SwitchSidePlugin : BasePlugin
         var itemServices = player.Pawn.Value?.ItemServices?.As<CCSPlayer_ItemServices>();
         itemServices?.RemoveWeapons();
 
-        player.GiveNamedItem("weapon_knife");
-        player.GiveNamedItem(player.Team == CsTeam.Terrorist ? "weapon_glock" : "weapon_usp_silencer");
-
-        var playerMoney = player.InGameMoneyServices;
-        if (playerMoney == null)
-            return;
-
-        var startMoney = ConVar.Find("mp_startmoney");
-        var money = startMoney?.GetPrimitiveValue<int>() ?? 800;
+        var playerPawn = player.PlayerPawn.Value;
+        if (playerPawn != null)
+        {
+            playerPawn.ActionTrackingServices?.WeaponPurchasesThisRound.WeaponPurchases.RemoveAll();
+            Utilities.SetStateChanged(playerPawn, "CCSPlayerPawn", "m_pActionTrackingServices");
+        }
 
         Server.NextFrame(() =>
         {
-            playerMoney.Account = money;
+            player.GiveNamedItem("weapon_knife");
+            player.GiveNamedItem(player.Team == CsTeam.Terrorist ? "weapon_glock" : "weapon_usp_silencer");
+
+            var playerMoney = player.InGameMoneyServices;
+            if (playerMoney == null) return;
+
+            var startMoney = ConVar.Find("mp_startmoney");
+            playerMoney.Account = startMoney?.GetPrimitiveValue<int>() ?? 800;
             Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
         });
     }
