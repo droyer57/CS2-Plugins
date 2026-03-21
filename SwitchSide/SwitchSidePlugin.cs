@@ -69,6 +69,7 @@ public sealed class SwitchSidePlugin : BasePlugin
                 foreach (var player in Utilities.GetPlayers())
                 {
                     player.PrintToCenterAlert("Inventory reset next round !");
+                    player.ExecuteClientCommand("play sounds/ui/competitive_accept_beep.vsnd_c");
                 }
             });
         }
