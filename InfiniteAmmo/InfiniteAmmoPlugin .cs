@@ -11,7 +11,7 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
 
     private bool _enabled = true;
 
-    private static readonly HashSet<string> GrenadeClasses = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> ExcludeClasses = new(StringComparer.OrdinalIgnoreCase)
     {
         "weapon_hegrenade",
         "weapon_flashbang",
@@ -23,6 +23,7 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
         "weapon_snowball",
         "weapon_bumpmine",
         "weapon_breachcharge",
+        "weapon_xm1014"
     };
 
     // Fallback reserve amount if we can't read a weapon-specific value.
@@ -55,7 +56,7 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
 
         var activeWeapon = player.PlayerPawn?.Value?.WeaponServices?.ActiveWeapon?.Value;
         if (activeWeapon == null || !activeWeapon.IsValid) return HookResult.Continue;
-        if (IsGrenade(activeWeapon)) return HookResult.Continue;
+        if (IsExcludeWeapon(activeWeapon)) return HookResult.Continue;
 
         RefillReserve(activeWeapon);
         return HookResult.Continue;
@@ -72,7 +73,7 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
         {
             var weapon = handle.Value;
             if (weapon == null || !weapon.IsValid) continue;
-            if (IsGrenade(weapon)) continue;
+            if (IsExcludeWeapon(weapon)) continue;
             if (!string.Equals(weapon.DesignerName, weaponName, StringComparison.OrdinalIgnoreCase)) continue;
 
             RefillReserve(weapon);
@@ -86,9 +87,9 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
         weapon.ReserveAmmo[0] = FallbackReserve;
     }
 
-    private static bool IsGrenade(CBasePlayerWeapon weapon)
+    private static bool IsExcludeWeapon(CBasePlayerWeapon weapon)
     {
-        if (GrenadeClasses.Contains(weapon.DesignerName)) return true;
+        if (ExcludeClasses.Contains(weapon.DesignerName)) return true;
         if (weapon is CBaseCSGrenade) return true;
         return false;
     }
