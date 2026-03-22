@@ -120,7 +120,7 @@ public sealed class BotBuyPlugin : BasePlugin
             return HookResult.Continue;
         }
 
-        Queue<string>? poolQueue = null;
+        var poolQueue = new Queue<string>();
         foreach (var player in Utility.Players)
         {
             if (!player.IsValid || !player.IsBot || !player.PlayerPawn.IsValid)
@@ -151,15 +151,21 @@ public sealed class BotBuyPlugin : BasePlugin
                 player.GiveNamedItem("item_defuser");
             }
 
-            poolQueue ??= GetPoolQueue(player.Team);
-            _nextRoundPistol = false;
+            if (poolQueue.Count == 0)
+            {
+                poolQueue = GetPoolQueue(player.Team);
+            }
+
             var weaponName = poolQueue.Dequeue();
+
             player.GiveNamedItem($"weapon_{weaponName}");
             if (weaponName == "awp")
             {
                 AddTimer(1f, () => Utility.PlaySoundToAllPlayers("sounds/ui/armsrace_final_kill_tone.vsnd_c"));
             }
         }
+
+        _nextRoundPistol = false;
 
         return HookResult.Continue;
     }
