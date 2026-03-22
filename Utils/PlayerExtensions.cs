@@ -24,4 +24,10 @@ public static class PlayerExtensions
             weapon.Value!.Remove();
         }
     }
+
+    public static CCSWeaponBase GiveWeapon(this CCSPlayerController player, string name)
+    {
+        var handle = player.GiveNamedItem(name);
+        return new CCSWeaponBase(handle);
+    }
 }

@@ -14,53 +14,6 @@ public sealed class BotBuyPlugin : BasePlugin
     public override string ModuleName => "Bot Buy";
     public override string ModuleVersion => "1.0.0";
 
-    private List<string> _weapons =
-    [
-        // Pistols
-        "weapon_glock", // T
-        "weapon_usp_silencer", // CT
-        "weapon_hkp2000", // CT
-        "weapon_elite", // T
-        "weapon_p250",
-        "weapon_deagle",
-        "weapon_revolver",
-        "weapon_fiveseven", // CT
-        "weapon_tec9", // T
-        "weapon_cz75a",
-
-        // SMGs
-        "weapon_mac10", // T
-        "weapon_mp5sd",
-        "weapon_mp7", // CT
-        "weapon_mp9", // CT
-        "weapon_p90",
-        "weapon_bizon", // CT
-        "weapon_ump45",
-
-        // Rifles
-        "weapon_ak47", // T
-        "weapon_m4a1", // CT
-        "weapon_m4a1_silencer", // CT
-        "weapon_aug", // CT
-        "weapon_sg556", // T
-        "weapon_galilar", // T
-        "weapon_famas", // CT
-        "weapon_scar20", // CT
-        "weapon_g3sg1", // T
-        "weapon_awp",
-        "weapon_ssg08",
-
-        // Shotguns
-        "weapon_nova",
-        "weapon_xm1014",
-        "weapon_sawedoff", // T
-        "weapon_mag7", // CT
-
-        // Machine Guns
-        "weapon_m249",
-        "weapon_negev",
-    ];
-
     private readonly List<WeaponItem> _weaponItems =
     [
         // Pistol
@@ -100,6 +53,7 @@ public sealed class BotBuyPlugin : BasePlugin
     private readonly List<string> _poolTRifle = [];
     private readonly List<string> _poolCTRifle = [];
     private bool _nextRoundPistol = true;
+    private readonly Dictionary<int, CCSWeaponBase> _weapons = [];
 
     private readonly HashSet<int> _awpPlayers = [];
 
@@ -112,6 +66,7 @@ public sealed class BotBuyPlugin : BasePlugin
     {
         _nextRoundPistol = true;
         _awpPlayers.Clear();
+        _weapons.Clear();
         ReadPool("weapons");
     }
 
@@ -124,6 +79,7 @@ public sealed class BotBuyPlugin : BasePlugin
         }
 
         _awpPlayers.Clear();
+        _weapons.Clear();
 
         var poolQueue = new Queue<string>();
         foreach (var player in Utility.Players)
@@ -151,9 +107,9 @@ public sealed class BotBuyPlugin : BasePlugin
                     break;
             }
 
-            if (player.Team == CsTeam.CounterTerrorist) // todo: handle hostage rescue
+            if (player.Team == CsTeam.CounterTerrorist)
             {
-                player.GiveNamedItem("item_defuser");
+                player.GiveNamedItem("item_defuser"); // todo: check if he already has an item_defuser
             }
 
             if (poolQueue.Count == 0)
@@ -163,7 +119,9 @@ public sealed class BotBuyPlugin : BasePlugin
 
             var weaponName = poolQueue.Dequeue();
 
-            player.GiveNamedItem($"weapon_{weaponName}");
+            var weapon = player.GiveWeapon($"weapon_{weaponName}");
+            _weapons.Add(player.Slot, weapon);
+
             if (weaponName == "awp")
             {
                 _awpPlayers.Add(player.Slot);
@@ -177,17 +135,19 @@ public sealed class BotBuyPlugin : BasePlugin
     }
 
     [GameEventHandler]
-    public HookResult OnPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
+    public HookResult OnPlayerDeath(EventPlayerDeath evt, GameEventInfo info)
     {
-        var player = @event.Userid;
+        var player = evt.Userid;
 
-        if (player == null || !player.IsValid)
+        if (player == null || !player.IsValid || !player.IsBot)
             return HookResult.Continue;
 
         if (_awpPlayers.Contains(player.Slot))
         {
             Utility.PlaySoundToAllPlayers("sounds/ui/armsrace_become_leader_match.vsnd_c");
         }
+
+        _weapons[player.Slot].Remove();
 
         return HookResult.Continue;
     }
