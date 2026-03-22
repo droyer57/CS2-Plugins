@@ -1,10 +1,12 @@
 <Solution>
-  <Project Path="BotAI/BotAI.csproj" />
+  <Folder Name="/vendors/">
+    <Project Path="BotAI/BotAI.csproj" />
+    <Project Path="BotState/BotState.csproj" />
+  </Folder>
   <Project Path="BotNoHeadshot/BotNoHeadshot.csproj" />
   <Project Path="BotBuy/BotBuy.csproj" />
   <Project Path="BotInfiniteMoney/BotInfiniteMoney.csproj" />
   <Project Path="BotRandomizer/BotRandomizer.csproj" />
-  <Project Path="BotState/BotState.csproj" />
   <Project Path="C4Timer/C4Timer.csproj" />
   <Project Path="HealthRegen/HealthRegen.csproj" />
   <Project Path="InfiniteAmmo/InfiniteAmmo.csproj" />
