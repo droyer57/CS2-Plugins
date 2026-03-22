@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
+using Utils;
 
 namespace SwitchSide;
 
@@ -12,8 +13,6 @@ public sealed class SwitchSidePlugin : BasePlugin
 {
     public override string ModuleName => "SwitchSide";
     public override string ModuleVersion => "1.0.0";
-
-    private bool _isFirstRound = true;
 
     private int _teamAScore;
     private int _teamBScore;
@@ -33,7 +32,6 @@ public sealed class SwitchSidePlugin : BasePlugin
 
     private void Reset()
     {
-        _isFirstRound = true;
         _teamAIsT = true;
         _teamAScore = 0;
         _teamBScore = 0;
@@ -42,7 +40,7 @@ public sealed class SwitchSidePlugin : BasePlugin
 
     private HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
     {
-        if (!_isEnable)
+        if (!_isEnable || Utility.IsWarmup)
         {
             return HookResult.Continue;
         }
@@ -65,6 +63,7 @@ public sealed class SwitchSidePlugin : BasePlugin
         {
             Server.NextFrame(() =>
             {
+                Server.ExecuteCommand("css_botbuy_nextroundpistol");
                 Server.PrintToChatAll("Inventory reset next round !");
                 foreach (var player in Utilities.GetPlayers())
                 {
@@ -84,7 +83,7 @@ public sealed class SwitchSidePlugin : BasePlugin
         {
             _hasReset = true;
 
-            foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+            foreach (var player in Utility.Players)
             {
                 ResetPlayer(player);
             }
@@ -95,8 +94,7 @@ public sealed class SwitchSidePlugin : BasePlugin
 
     private void ResetPlayer(CCSPlayerController player)
     {
-        var itemServices = player.Pawn.Value?.ItemServices?.As<CCSPlayer_ItemServices>();
-        itemServices?.RemoveWeapons();
+        player.ResetInventory("weapon_c4", "weapon_knife");
 
         var playerPawn = player.PlayerPawn.Value;
         if (playerPawn != null)
@@ -107,7 +105,6 @@ public sealed class SwitchSidePlugin : BasePlugin
 
         Server.NextFrame(() =>
         {
-            player.GiveNamedItem("weapon_knife");
             player.GiveNamedItem(player.Team == CsTeam.Terrorist ? "weapon_glock" : "weapon_usp_silencer");
 
             var playerMoney = player.InGameMoneyServices;
@@ -121,14 +118,8 @@ public sealed class SwitchSidePlugin : BasePlugin
 
     private HookResult OnRoundEnd(EventRoundEnd evt, GameEventInfo info)
     {
-        if (!_isEnable)
+        if (!_isEnable || Utility.IsWarmup)
         {
-            return HookResult.Continue;
-        }
-
-        if (_isFirstRound)
-        {
-            _isFirstRound = false;
             return HookResult.Continue;
         }
 
@@ -168,9 +159,7 @@ public sealed class SwitchSidePlugin : BasePlugin
 
     private static void SwapAllPlayers()
     {
-        var players = Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller");
-
-        foreach (var player in players)
+        foreach (var player in Utility.Players)
         {
             if (!player.IsValid)
                 continue;
