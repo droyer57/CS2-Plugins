@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="BotAI/BotAI.csproj" />
   <Project Path="BotNoHeadshot/BotNoHeadshot.csproj" />
+  <Project Path="BotBuy/BotBuy.csproj" />
   <Project Path="BotInfiniteMoney/BotInfiniteMoney.csproj" />
   <Project Path="BotRandomizer/BotRandomizer.csproj" />
   <Project Path="BotState/BotState.csproj" />
@@ -10,4 +11,5 @@
   <Project Path="NoTagging/NoTagging.csproj" />
   <Project Path="SkinChanger/SkinChanger.csproj" />
   <Project Path="SwitchSide/SwitchSide.csproj" />
+  <Project Path="Utils/Utils.csproj" />
 </Solution>
