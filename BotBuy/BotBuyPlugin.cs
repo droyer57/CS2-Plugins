@@ -101,6 +101,8 @@ public sealed class BotBuyPlugin : BasePlugin
     private readonly List<string> _poolCTRifle = [];
     private bool _nextRoundPistol = true;
 
+    private readonly HashSet<int> _awpPlayers = [];
+
     public override void Load(bool hotReload)
     {
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
@@ -109,6 +111,7 @@ public sealed class BotBuyPlugin : BasePlugin
     private void OnMapStart(string mapName)
     {
         _nextRoundPistol = true;
+        _awpPlayers.Clear();
         ReadPool("weapons");
     }
 
@@ -119,6 +122,8 @@ public sealed class BotBuyPlugin : BasePlugin
         {
             return HookResult.Continue;
         }
+
+        _awpPlayers.Clear();
 
         var poolQueue = new Queue<string>();
         foreach (var player in Utility.Players)
@@ -161,11 +166,28 @@ public sealed class BotBuyPlugin : BasePlugin
             player.GiveNamedItem($"weapon_{weaponName}");
             if (weaponName == "awp")
             {
+                _awpPlayers.Add(player.Slot);
                 AddTimer(1f, () => Utility.PlaySoundToAllPlayers("sounds/ui/armsrace_final_kill_tone.vsnd_c"));
             }
         }
 
         _nextRoundPistol = false;
+
+        return HookResult.Continue;
+    }
+
+    [GameEventHandler]
+    public HookResult OnPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
+    {
+        var player = @event.Userid;
+
+        if (player == null || !player.IsValid)
+            return HookResult.Continue;
+
+        if (_awpPlayers.Contains(player.Slot))
+        {
+            Utility.PlaySoundToAllPlayers("sounds/ui/armsrace_become_leader_match.vsnd_c");
+        }
 
         return HookResult.Continue;
     }
