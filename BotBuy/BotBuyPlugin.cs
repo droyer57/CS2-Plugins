@@ -107,9 +107,9 @@ public sealed class BotBuyPlugin : BasePlugin
                     break;
             }
 
-            if (player.Team == CsTeam.CounterTerrorist)
+            if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
             {
-                player.GiveNamedItem("item_defuser"); // todo: check if he already has an item_defuser
+                player.GiveNamedItem("item_defuser");
             }
 
             if (poolQueue.Count == 0)

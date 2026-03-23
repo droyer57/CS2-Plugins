@@ -17,7 +17,7 @@ public static class Utility
 
     public static IEnumerable<CCSPlayerController> Players =>
         Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller");
-    
+
     public static void PlaySoundToAllPlayers(string path)
     {
         foreach (var player in Utilities.GetPlayers())

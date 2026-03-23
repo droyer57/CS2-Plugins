@@ -15,7 +15,6 @@ public static class PlayerExtensions
 
         var toRemove = playerPawn.WeaponServices.MyWeapons
             .Where(w => w.IsValid && w.Value != null
-                                  // && w.Value.DesignerName != "weapon_c4"
                                   && !excludeWeapons.Contains(w.Value.DesignerName))
             .ToList();
 
@@ -29,5 +28,18 @@ public static class PlayerExtensions
     {
         var handle = player.GiveNamedItem(name);
         return new CCSWeaponBase(handle);
+    }
+
+    public static bool HasDefuser(this CCSPlayerController player)
+    {
+        var playerPawn = player.PlayerPawn.Value;
+        if (playerPawn == null)
+            return false;
+
+        if (playerPawn.ItemServices == null)
+            return false;
+
+        var itemServices = new CCSPlayer_ItemServices(playerPawn.ItemServices.Handle);
+        return itemServices.HasDefuser;
     }
 }
