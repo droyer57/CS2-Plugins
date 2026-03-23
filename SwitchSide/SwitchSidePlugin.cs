@@ -83,7 +83,7 @@ public sealed class SwitchSidePlugin : BasePlugin
         {
             _hasReset = true;
 
-            foreach (var player in Utility.Players)
+            foreach (var player in Utilities.GetPlayers())
             {
                 ResetPlayer(player);
             }
@@ -101,7 +101,7 @@ public sealed class SwitchSidePlugin : BasePlugin
 
     private void ResetPlayer(CCSPlayerController player)
     {
-        player.ResetInventory("weapon_c4", "weapon_knife");
+        player.ResetInventory(this, "weapon_knife");
 
         var playerPawn = player.PlayerPawn.Value;
         if (playerPawn != null)

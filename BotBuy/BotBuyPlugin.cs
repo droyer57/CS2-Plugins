@@ -94,7 +94,7 @@ public sealed class BotBuyPlugin : BasePlugin
             playerMoney.Account = 0;
             Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
 
-            player.ResetInventory("weapon_c4");
+            player.ResetInventory(this);
 
             var num = Random.Shared.Next(3);
             switch (num)

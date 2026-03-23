@@ -1,27 +1,41 @@
 ﻿using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Utils;
 
 namespace Utils;
 
 public static class PlayerExtensions
 {
-    public static void ResetInventory(this CCSPlayerController player, params string[] excludeWeapons)
+    public static void ResetInventory(this CCSPlayerController player, BasePlugin plugin, params string[] keepWeapons)
     {
         if (!player.IsValid || !player.PlayerPawn.IsValid)
             return;
 
         var playerPawn = player.PlayerPawn.Value;
-        if (playerPawn?.WeaponServices == null)
+        if (playerPawn?.WeaponServices == null || playerPawn.ItemServices == null)
             return;
 
-        var toRemove = playerPawn.WeaponServices.MyWeapons
-            .Where(w => w.IsValid && w.Value != null
-                                  && !excludeWeapons.Contains(w.Value.DesignerName))
+        var c4 = playerPawn.WeaponServices.MyWeapons
+            .Select(w => w.Value)
+            .FirstOrDefault(w => w?.IsValid == true && w.DesignerName == "weapon_c4");
+
+        if (c4 != null)
+        {
+            var itemServices = playerPawn.ItemServices.As<CCSPlayer_ItemServices>();
+            itemServices.DropActivePlayerWeapon(c4);
+
+            plugin.AddTimer(3f, () => { c4.Teleport(playerPawn.AbsOrigin, playerPawn.AbsRotation, new Vector()); });
+        }
+
+        var toKeep = playerPawn.WeaponServices.MyWeapons
+            .Select(w => w.Value)
+            .Where(w => w?.IsValid == true && keepWeapons.Contains(w.DesignerName))
+            .Select(w => w!.DesignerName)
             .ToList();
 
-        foreach (var weapon in toRemove)
-        {
-            weapon.Value!.Remove();
-        }
+        player.RemoveWeapons();
+
+        foreach (var weaponName in toKeep)
+            player.GiveNamedItem(weaponName);
     }
 
     public static CCSWeaponBase GiveWeapon(this CCSPlayerController player, string name)
