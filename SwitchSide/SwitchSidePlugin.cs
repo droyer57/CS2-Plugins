@@ -89,6 +89,13 @@ public sealed class SwitchSidePlugin : BasePlugin
             }
         }
 
+        // todo: maybe put that in another plugin ?
+        foreach (var player in Utilities.GetPlayers())
+        {
+            if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
+                player.GiveNamedItem("item_defuser");
+        }
+
         return HookResult.Continue;
     }
 
