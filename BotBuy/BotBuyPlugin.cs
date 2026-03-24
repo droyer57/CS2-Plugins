@@ -156,8 +156,16 @@ public sealed class BotBuyPlugin : BasePlugin
     {
         var isT = team == CsTeam.Terrorist;
         var pool = _nextRoundPistol ? isT ? _poolTPistol : _poolCTPistol : isT ? _poolTRifle : _poolCTRifle;
-        pool.Shuffle();
-        return new Queue<string>(pool);
+        var newPool = pool.ToList();
+        newPool.Shuffle();
+
+        if (!_nextRoundPistol && Random.Shared.Next(10) == 0)
+        {
+            var count = Utility.Players.Count(p => p.Team == team);
+            newPool.Insert(Random.Shared.Next(count), "awp");
+        }
+
+        return new Queue<string>(newPool);
     }
 
     private void ReadPool(string filename)
