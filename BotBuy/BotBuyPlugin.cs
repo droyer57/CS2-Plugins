@@ -96,7 +96,8 @@ public sealed class BotBuyPlugin : BasePlugin
 
             player.ResetInventory(this);
 
-            var num = Random.Shared.Next(3);
+            var num = _nextRoundPistol ? Random.Shared.Next(2) : Random.Shared.Next(3);
+
             switch (num)
             {
                 case 1:
@@ -144,7 +145,7 @@ public sealed class BotBuyPlugin : BasePlugin
 
         if (_awpPlayers.Contains(player.Slot))
         {
-            Utility.PlaySoundToAllPlayers("sounds/ui/armsrace_become_leader_match.vsnd_c");
+            Utility.PlaySoundToAllPlayers("BotWithAWPDead");
         }
 
         _weapons[player.Slot].Remove();
