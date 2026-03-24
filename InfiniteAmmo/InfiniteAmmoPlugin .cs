@@ -1,4 +1,5 @@
-﻿using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
 
@@ -7,7 +8,7 @@ namespace InfiniteAmmo;
 public sealed class InfiniteAmmoPlugin : BasePlugin
 {
     public override string ModuleName => "InfiniteAmmo";
-    public override string ModuleVersion => "1.1.0";
+    public override string ModuleVersion => "1.0.0";
 
     private bool _enabled = true;
 
@@ -40,51 +41,39 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
     {
     }
 
-    private HookResult OnWeaponFire(EventWeaponFire @event, GameEventInfo info)
-    {
-        if (!_enabled) return HookResult.Continue;
-        RefillReserveForActiveWeapon(@event.Userid, @event.Weapon);
-        return HookResult.Continue;
-    }
-
-    private HookResult OnWeaponReload(EventWeaponReload @event, GameEventInfo info)
+    private HookResult OnWeaponFire(EventWeaponFire evt, GameEventInfo info)
     {
         if (!_enabled) return HookResult.Continue;
 
-        var player = @event.Userid;
+        var player = evt.Userid;
         if (player == null || !player.IsValid) return HookResult.Continue;
 
-        var activeWeapon = player.PlayerPawn?.Value?.WeaponServices?.ActiveWeapon?.Value;
-        if (activeWeapon == null || !activeWeapon.IsValid) return HookResult.Continue;
-        if (IsExcludeWeapon(activeWeapon)) return HookResult.Continue;
+        RefillActiveWeapon(player);
 
-        RefillReserve(activeWeapon);
         return HookResult.Continue;
     }
 
-    private void RefillReserveForActiveWeapon(CCSPlayerController? player, string weaponName)
+    private HookResult OnWeaponReload(EventWeaponReload evt, GameEventInfo info)
     {
-        if (player == null || !player.IsValid) return;
+        if (!_enabled) return HookResult.Continue;
 
-        var weapons = player.PlayerPawn?.Value?.WeaponServices?.MyWeapons;
-        if (weapons == null) return;
+        var player = evt.Userid;
+        if (player == null || !player.IsValid) return HookResult.Continue;
 
-        foreach (var handle in weapons)
-        {
-            var weapon = handle.Value;
-            if (weapon == null || !weapon.IsValid) continue;
-            if (IsExcludeWeapon(weapon)) continue;
-            if (!string.Equals(weapon.DesignerName, weaponName, StringComparison.OrdinalIgnoreCase)) continue;
+        RefillActiveWeapon(player);
 
-            RefillReserve(weapon);
-            break;
-        }
+        return HookResult.Continue;
     }
 
-    private static void RefillReserve(CBasePlayerWeapon weapon)
+    private static void RefillActiveWeapon(CCSPlayerController player)
     {
-        // Use a large constant — CS2 will silently clamp it to the real per-weapon cap.
-        weapon.ReserveAmmo[0] = FallbackReserve;
+        var activeWeapon = player.PlayerPawn.Value?.WeaponServices?.ActiveWeapon.Value;
+        if (activeWeapon == null || !activeWeapon.IsValid)
+            return;
+        if (IsExcludeWeapon(activeWeapon))
+            return;
+
+        activeWeapon.ReserveAmmo[0] = FallbackReserve;
     }
 
     private static bool IsExcludeWeapon(CBasePlayerWeapon weapon)
