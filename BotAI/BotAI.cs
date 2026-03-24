@@ -1,6 +1,7 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
+using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
 using Common;
@@ -22,11 +23,14 @@ public static class BotOffsets
 public class BotAI : BasePlugin
 {
     public override string ModuleName        => "Patches - Bot AI";
-    public override string ModuleVersion     => "1.4.2";
+    public override string ModuleVersion     => "1.5.2";
     public override string ModuleAuthor      => "Austin (updated by ed0ard)";
-    public override string ModuleDescription => "Improve bots' behavior";
+    public override string ModuleDescription =>
+        "Bot AI patches: spawn, safe-check, knife suppression, unrestricted weapon buying";
 
     private readonly List<PatchInfo> _appliedPatches = [];
+
+    private bool _check1cActive = false;
 
     private readonly Dictionary<string, (string signature, string patch, string expectedOriginal, int patchOffset)>
         _patchDefinitions = new()
@@ -39,7 +43,7 @@ public class BotAI : BasePlugin
             patchOffset:      0
         ),
 
-        // NOP the BombState reset to avoid bot standing still
+        // NOP the BombState reset to avoid bot confusion
         ["GameState_Reset"] = (
             signature:        "83 7F 0C 00 74 07 C7 47 0C 00 00 00 00",
             patch:            "0F 1F 80 00 00 00 00",
@@ -47,7 +51,7 @@ public class BotAI : BasePlugin
             patchOffset:      6
         ),
 
-        // IsSafe() always false in IdleState
+        // IsSafe() always false in IdleState → bots don't idle near safe areas
         ["Idle_IsSafeAlwaysFalse"] = (
             signature:        "74 28 33 D2 48 8B CE E8 ? ? ? ? 84 C0 75 1A",
             patch:            "EB 28",
@@ -56,7 +60,7 @@ public class BotAI : BasePlugin
         ),
 
 
-        // EscapeFromBombState::OnEnter tail-call jmp → ret
+        // EscapeFromBombState::OnEnter tail-call jmp → ret (prevents crash)
         ["EscapeFromBomb_OnEnter_NoEquipKnife"] = (
             signature:        "48 83 C4 20 5B E9 BB 50 F9 FF",
             patch:            "C3 90 90 90 90",
@@ -88,7 +92,31 @@ public class BotAI : BasePlugin
             expectedOriginal: "83 F9 05",
             patchOffset:      0
         ),
+
+        ["Check_1C_SkipSavingMoneyFlag"] = (
+            signature:        "80 79 18 00 74 62 48 8B",
+            patch:            "EB 62",
+            expectedOriginal: "74 62",
+            patchOffset:      4
+        ),
+
+
+        ["InvestigateNoise_SkipSelfDefenseCheck"] = (
+            signature:        "83 BB 08 63 00 00 02 74 1E",
+            patch:            "90 90",
+            expectedOriginal: "74 1E",
+            patchOffset:      7    // RVA 0x318ed6
+        ),
+
+        ["InvestigateNoise_SkipIsInCombatCheck"] = (
+            signature:        "84 C0 74 27 83 BB 08 63 00 00 02",
+            patch:            "90 90",
+            expectedOriginal: "74 27",
+            patchOffset:      2    // RVA 0x318ecd
+        ),
     };
+
+    private const string Check1cName = "Check_1C_SkipSavingMoneyFlag";
 
     public override void Load(bool hotReload)
     {
@@ -96,9 +124,67 @@ public class BotAI : BasePlugin
 
         foreach (var name in _patchDefinitions.Keys)
         {
+            if (name == Check1cName) continue;
             if (ApplyPatch(name)) Logger.LogInformation($"{name}: applied.");
             else                  Logger.LogError($"{name}: FAILED.");
         }
+
+        RegisterEventHandler<EventRoundStart>((@event, info) =>
+        {
+            ConVar? botLoadout = ConVar.Find("bot_loadout");
+            if (botLoadout != null && !string.IsNullOrEmpty(botLoadout.StringValue))
+            {
+                if (_check1cActive)
+                    RemoveCheck1cPatch();
+
+                return HookResult.Continue;
+            }
+            
+            if (IsRestrictedGameMode())
+            {
+                Logger.LogInformation($"[Check_1C] Current game mode is restricted, skip loading patch.");
+                if (_check1cActive)
+                {
+                    RemoveCheck1cPatch();
+                }
+                return HookResult.Continue;
+            }
+
+            if (IsFirstRoundOfHalf())
+            {
+                if (!_check1cActive)
+                {
+                    if (ApplyPatch(Check1cName))
+                    {
+                        _check1cActive = true;
+                        Logger.LogInformation($"{Check1cName}: applied (first round of half).");
+                    }
+                    else
+                    {
+                        Logger.LogError($"{Check1cName}: FAILED to apply on first round of half.");
+                    }
+                }
+            }
+            else
+            {
+                if (_check1cActive)
+                {
+                    RemoveCheck1cPatch();
+                    Logger.LogInformation($"{Check1cName}: not first round of half, skipped/removed.");
+                }
+            }
+            return HookResult.Continue;
+        });
+
+        RegisterEventHandler<EventRoundFreezeEnd>((@event, info) =>
+        {
+            if (_check1cActive)
+            {
+                RemoveCheck1cPatch();
+                Logger.LogInformation($"{Check1cName}: freezetime ended, patch removed.");
+            }
+            return HookResult.Continue;
+        });
 
         RegisterEventHandler<EventPlayerSpawn>((@event, info) =>
         {
@@ -121,15 +207,85 @@ public class BotAI : BasePlugin
             return HookResult.Continue;
         });
 
-        Logger.LogInformation($"Applied {_appliedPatches.Count}/{_patchDefinitions.Count} patches.");
+        Logger.LogInformation($"Applied {_appliedPatches.Count}/{_patchDefinitions.Count - 1} persistent patches (Check_1C managed dynamically).");
     }
 
     public override void Unload(bool hotReload)
     {
         Logger.LogInformation("Bot AI Patches unloading...");
+
         foreach (var patch in _appliedPatches) RestorePatch(patch);
         _appliedPatches.Clear();
+        _check1cActive = false;
         Logger.LogInformation("All patches restored.");
+    }
+
+    private bool IsRestrictedGameMode()
+    {
+        int gameType = ConVar.Find("game_type")?.GetPrimitiveValue<int>() ?? 0;
+        int gameMode = ConVar.Find("game_mode")?.GetPrimitiveValue<int>() ?? 0;
+
+        bool isDeathmatch = (gameType == 1 && gameMode == 2);
+        bool isArmsRace   = (gameType == 1 && gameMode == 0);
+
+        return isDeathmatch || isArmsRace;
+    }
+
+    private bool IsFirstRoundOfHalf()
+    {
+        try
+        {
+            var gameRules = Utilities
+                .FindAllEntitiesByDesignerName<CCSGameRulesProxy>("cs_gamerules")
+                .FirstOrDefault()?.GameRules;
+
+            if (gameRules == null) return false;
+
+            int played      = gameRules.TotalRoundsPlayed;
+            int maxRounds   = ConVar.Find("mp_maxrounds")?.GetPrimitiveValue<int>() ?? 24;
+            int otMaxRounds = ConVar.Find("mp_overtime_maxrounds")?.GetPrimitiveValue<int>() ?? 6;
+
+            if (maxRounds   <= 0) maxRounds   = 24;
+            if (otMaxRounds <= 0) otMaxRounds = 6;
+
+            int halfLength   = maxRounds   / 2;
+            int otHalfLength = otMaxRounds / 2;
+
+            if (played == 0 || played == halfLength)
+            {
+                Logger.LogInformation($"[Check_1C] Regular match first round of half detected (played={played}).");
+                return true;
+            }
+
+            if (played >= maxRounds)
+            {
+                int otPlayed = played - maxRounds;
+                int posInOT  = otPlayed % otMaxRounds;
+
+                if (posInOT == 0 || posInOT == otHalfLength)
+                {
+                    Logger.LogInformation($"[Check_1C] Overtime first round of half detected (played={played}, posInOT={posInOT}).");
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"IsFirstRoundOfHalf: {ex.Message}");
+            return false;
+        }
+    }
+
+    private void RemoveCheck1cPatch()
+    {
+        var patch = _appliedPatches.FirstOrDefault(p => p.Name == Check1cName);
+        if (patch == null) return;
+
+        RestorePatch(patch);
+        _appliedPatches.Remove(patch);
+        _check1cActive = false;
     }
 
     // ── Patch machinery ───────────────────────────────────────────────────────

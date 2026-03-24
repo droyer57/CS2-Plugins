@@ -11,7 +11,7 @@ namespace BotState;
 public class BotState : BasePlugin
 {
     public override string ModuleName        => "Smarter-Bot";
-    public override string ModuleVersion     => "1.3.3";
+    public override string ModuleVersion     => "1.4.1";
     public override string ModuleAuthor      => "ed0ard";
     public override string ModuleDescription => "Make bots smarter";
 
@@ -31,6 +31,7 @@ public class BotState : BasePlugin
         RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawn);
         RegisterEventHandler<EventRoundFreezeEnd>(OnRoundFreezeEnd);
         // RegisterEventHandler<EventPlayerBlind>(OnPlayerBlind);
+        RegisterEventHandler<EventBombPlanted>(OnBombPlanted);
         RegisterListener<Listeners.OnTick>(OnTick);
     }
 
@@ -146,21 +147,68 @@ public class BotState : BasePlugin
             ref bool isSleeping = ref bot.IsSleeping;
             isSleeping = false;
 
-            ref bool isStuck = ref bot.IsStuck;
-            if (isStuck)
-            {
-                isStuck = false;
-            }
-
             ref bool allowActive = ref bot.AllowActive;
             allowActive = true;
             
+            ref bool isRapidFiring = ref bot.IsRapidFiring;
+            isRapidFiring = true;
+
             ref float fireWeaponTimestamp = ref bot.FireWeaponTimestamp;
             fireWeaponTimestamp = 0.0f;
 
             ref float duration = ref bot.IgnoreEnemiesTimer.Duration;
             duration = 0.0f;
+
+            ref bool isStuck = ref bot.IsStuck;
+            if (isStuck)
+            {
+                ref bool isRunning = ref bot.IsRunning;
+                isRunning = true;
+
+                ref float jumpTimestamp = ref bot.JumpTimestamp;
+                jumpTimestamp = 0.0f;
+
+                CountdownTimer stuckJumpTimer = bot.StuckJumpTimer;
+
+                ref float stuckduration = ref stuckJumpTimer.Duration;
+                stuckduration = 0.0f;
+
+                ref float stucktimestamp = ref stuckJumpTimer.Timestamp;
+                stucktimestamp = Server.CurrentTime;
+
+                ref float stucktimescale = ref stuckJumpTimer.Timescale;
+                stucktimescale = 1.0f;
+            }
         }
+    }
+
+    private HookResult OnBombPlanted(EventBombPlanted @event, GameEventInfo info)
+    {
+        foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+        {
+            if (!player.IsValid || !player.IsBot)
+                continue;
+
+            var pawn = player.PlayerPawn.Value;
+            if (pawn == null || !pawn.IsValid)
+                continue;
+
+            var bot = pawn.Bot;
+            if (bot == null)
+                continue;
+
+            CountdownTimer hurryTimer = bot.HurryTimer;
+
+            ref float duration = ref hurryTimer.Duration;
+            duration = 40.0f;
+
+            ref float timestamp = ref hurryTimer.Timestamp;
+            timestamp = Server.CurrentTime;
+
+            ref float timescale = ref hurryTimer.Timescale;
+            timescale = 1.0f;
+        }
+        return HookResult.Continue;
     }
 
     private static void ApplyBotState(CCSPlayerController player)
