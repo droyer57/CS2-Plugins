@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Utils;
 
 namespace Utils;
 
@@ -18,11 +19,12 @@ public static class Utility
     public static IEnumerable<CCSPlayerController> Players =>
         Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller");
 
-    public static void PlaySoundToAllPlayers(string path)
+    public static void PlaySoundToAllPlayers(string soundEventName)
     {
         foreach (var player in Utilities.GetPlayers())
         {
-            player.ExecuteClientCommand($"play {path}");
+            RecipientFilter filter = [player];
+            player.EmitSound(soundEventName, recipients: filter);
         }
     }
 }

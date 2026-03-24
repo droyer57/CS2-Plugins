@@ -64,11 +64,12 @@ public sealed class SwitchSidePlugin : BasePlugin
             Server.NextFrame(() =>
             {
                 Server.ExecuteCommand("css_botbuy_nextroundpistol");
-                Server.PrintToChatAll("Inventory reset next round !");
                 foreach (var player in Utilities.GetPlayers())
                 {
                     player.PrintToCenterAlert("Inventory reset next round !");
-                    player.ExecuteClientCommand("play sounds/ui/competitive_accept_beep.vsnd_c");
+
+                    RecipientFilter filter = [player];
+                    player.EmitSound("NextRoundPistol", recipients: filter);
                 }
             });
         }

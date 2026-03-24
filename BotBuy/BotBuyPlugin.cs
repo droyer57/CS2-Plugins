@@ -125,7 +125,7 @@ public sealed class BotBuyPlugin : BasePlugin
             if (weaponName == "awp")
             {
                 _awpPlayers.Add(player.Slot);
-                AddTimer(1f, () => Utility.PlaySoundToAllPlayers("sounds/ui/armsrace_final_kill_tone.vsnd_c"));
+                AddTimer(1f, () => Utility.PlaySoundToAllPlayers("BotWithAWP"));
             }
         }
 
