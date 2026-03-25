@@ -22,6 +22,7 @@ public sealed class SwitchSidePlugin : BasePlugin
 
     private int _maxRounds = 11;
     private bool _hasReset;
+    private bool _nextRoundReset;
 
     public override void Load(bool hotReload)
     {
@@ -53,17 +54,17 @@ public sealed class SwitchSidePlugin : BasePlugin
         }
 
         var totalScore = _teamAScore + _teamBScore;
-        bool canTellReset;
         if (stopScore % 2 == 0)
-            canTellReset = totalScore == stopScore;
+            _nextRoundReset = totalScore == stopScore;
         else
-            canTellReset = totalScore == stopScore - 1;
+            _nextRoundReset = totalScore == stopScore - 1;
 
-        if (canTellReset)
+        if (_nextRoundReset)
         {
+            Server.ExecuteCommand("mp_equipment_reset_rounds 1");
+
             Server.NextFrame(() =>
             {
-                Server.ExecuteCommand("css_botbuy_nextroundpistol");
                 foreach (var player in Utilities.GetPlayers())
                 {
                     player.PrintToCenterAlert("Inventory reset next round !");
@@ -88,6 +89,8 @@ public sealed class SwitchSidePlugin : BasePlugin
             {
                 ResetPlayer(player);
             }
+
+            Server.ExecuteCommand("mp_equipment_reset_rounds 0");
         }
 
         foreach (var player in Utilities.GetPlayers())
@@ -101,8 +104,6 @@ public sealed class SwitchSidePlugin : BasePlugin
 
     private void ResetPlayer(CCSPlayerController player)
     {
-        player.ResetInventory(this, "weapon_knife");
-
         var playerPawn = player.PlayerPawn.Value;
         if (playerPawn != null)
         {
@@ -112,8 +113,6 @@ public sealed class SwitchSidePlugin : BasePlugin
 
         Server.NextFrame(() =>
         {
-            player.GiveNamedItem(player.Team == CsTeam.Terrorist ? "weapon_glock" : "weapon_usp_silencer");
-
             var playerMoney = player.InGameMoneyServices;
             if (playerMoney == null) return;
 
@@ -128,6 +127,12 @@ public sealed class SwitchSidePlugin : BasePlugin
         if (!_isEnable || Utility.IsWarmup)
         {
             return HookResult.Continue;
+        }
+
+        if (_nextRoundReset)
+        {
+            Server.ExecuteCommand("css_botbuy_nextroundpistol");
+            _nextRoundReset = false;
         }
 
         var winner = (CsTeam)evt.Winner;

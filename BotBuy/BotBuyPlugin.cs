@@ -11,7 +11,7 @@ namespace BotBuy;
 
 public sealed class BotBuyPlugin : BasePlugin
 {
-    public override string ModuleName => "Bot Buy";
+    public override string ModuleName => "BotBuy";
     public override string ModuleVersion => "1.0.0";
 
     private readonly List<WeaponItem> _weaponItems =
@@ -52,10 +52,10 @@ public sealed class BotBuyPlugin : BasePlugin
     private readonly List<string> _poolCTPistol = [];
     private readonly List<string> _poolTRifle = [];
     private readonly List<string> _poolCTRifle = [];
-    private bool _nextRoundPistol = true;
-    private readonly Dictionary<int, CCSWeaponBase> _weapons = [];
+    private bool _isRoundPistol = true;
 
     private readonly HashSet<int> _awpPlayers = [];
+    private bool _isEnable = true;
 
     public override void Load(bool hotReload)
     {
@@ -64,22 +64,20 @@ public sealed class BotBuyPlugin : BasePlugin
 
     private void OnMapStart(string mapName)
     {
-        _nextRoundPistol = true;
+        _isRoundPistol = true;
         _awpPlayers.Clear();
-        _weapons.Clear();
         ReadPool("weapons");
     }
 
     [GameEventHandler]
     public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
     {
-        if (Utility.IsWarmup)
+        if (!_isEnable || Utility.IsWarmup)
         {
             return HookResult.Continue;
         }
 
         _awpPlayers.Clear();
-        _weapons.Clear();
 
         var poolQueue = new Queue<string>();
         foreach (var player in Utility.Players)
@@ -94,9 +92,9 @@ public sealed class BotBuyPlugin : BasePlugin
             playerMoney.Account = 0;
             Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
 
-            player.ResetInventory(this);
+            ResetPlayer(player);
 
-            var num = _nextRoundPistol ? Random.Shared.Next(2) : Random.Shared.Next(3);
+            var num = _isRoundPistol ? Random.Shared.Next(2) : Random.Shared.Next(3);
 
             switch (num)
             {
@@ -120,8 +118,7 @@ public sealed class BotBuyPlugin : BasePlugin
 
             var weaponName = poolQueue.Dequeue();
 
-            var weapon = player.GiveWeapon($"weapon_{weaponName}");
-            _weapons.Add(player.Slot, weapon);
+            player.GiveWeapon($"weapon_{weaponName}");
 
             if (weaponName == "awp")
             {
@@ -130,14 +127,38 @@ public sealed class BotBuyPlugin : BasePlugin
             }
         }
 
-        _nextRoundPistol = false;
+        _isRoundPistol = false;
 
         return HookResult.Continue;
+    }
+
+    private void ResetPlayer(CCSPlayerController player)
+    {
+        if (!player.IsValid || !player.PlayerPawn.IsValid)
+            return;
+
+        var playerPawn = player.PlayerPawn.Value;
+        if (playerPawn?.WeaponServices == null || playerPawn.ItemServices == null)
+            return;
+
+        var toRemove = playerPawn.WeaponServices.MyWeapons
+            .Select(w => w.Value)
+            .Where(w => w?.IsValid == true && w.DesignerName != "weapon_c4");
+
+        foreach (var weapon in toRemove)
+        {
+            weapon!.AddEntityIOEvent("Kill", weapon, delay: 0.1f);
+        }
     }
 
     [GameEventHandler]
     public HookResult OnPlayerDeath(EventPlayerDeath evt, GameEventInfo info)
     {
+        if (!_isEnable)
+        {
+            return HookResult.Continue;
+        }
+
         var player = evt.Userid;
 
         if (player == null || !player.IsValid || !player.IsBot)
@@ -148,19 +169,17 @@ public sealed class BotBuyPlugin : BasePlugin
             Utility.PlaySoundToAllPlayers("BotWithAWPDead");
         }
 
-        _weapons[player.Slot].Remove();
-
         return HookResult.Continue;
     }
 
     private Queue<string> GetPoolQueue(CsTeam team)
     {
         var isT = team == CsTeam.Terrorist;
-        var pool = _nextRoundPistol ? isT ? _poolTPistol : _poolCTPistol : isT ? _poolTRifle : _poolCTRifle;
+        var pool = _isRoundPistol ? isT ? _poolTPistol : _poolCTPistol : isT ? _poolTRifle : _poolCTRifle;
         var newPool = pool.ToList();
         newPool.Shuffle();
 
-        if (!_nextRoundPistol && Random.Shared.Next(10) == 0)
+        if (!_isRoundPistol && Random.Shared.Next(10) == 0)
         {
             var count = Utility.Players.Count(p => p.Team == team);
             newPool.Insert(Random.Shared.Next(count), "awp");
@@ -219,6 +238,28 @@ public sealed class BotBuyPlugin : BasePlugin
     [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
     public void OnNextRoundPistolCommand(CCSPlayerController? player, CommandInfo command)
     {
-        _nextRoundPistol = true;
+        _isRoundPistol = true;
+    }
+
+    [ConsoleCommand("css_botbuy", "Enable or disable bot buy plugin")]
+    [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnBotBuyCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        var arg = command.GetArg(1); // "0" or "1"
+
+        switch (arg)
+        {
+            case "1":
+                _isEnable = true;
+                command.ReplyToCommand($"[{ModuleName}] Enabled!");
+                break;
+            case "0":
+                _isEnable = false;
+                command.ReplyToCommand($"[{ModuleName}] Disabled!");
+                break;
+            default:
+                command.ReplyToCommand($"[{ModuleName}] Usage: css_botbuy [0|1]");
+                break;
+        }
     }
 }
