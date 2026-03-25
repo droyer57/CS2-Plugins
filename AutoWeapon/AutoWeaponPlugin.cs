@@ -86,6 +86,9 @@ public sealed class AutoWeaponPlugin : BasePlugin
                     player.GiveNamedItem("item_assaultsuit");
                     break;
             }
+
+            if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
+                player.GiveNamedItem("item_defuser");
         }
 
         return HookResult.Continue;
