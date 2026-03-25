@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
 using Utils;
+using Utils.Data;
 
 // ReSharper disable InconsistentNaming
 
@@ -14,39 +15,7 @@ public sealed class BotBuyPlugin : BasePlugin
     public override string ModuleName => "BotBuy";
     public override string ModuleVersion => "1.0.0";
 
-    private readonly List<WeaponItem> _weaponItems =
-    [
-        // Pistol
-        new("glock", Team.Terrorist, RoundType.Pistol),
-        new("elite", Team.Terrorist, RoundType.Pistol),
-        new("tec9", Team.Terrorist, RoundType.Pistol),
-
-        new("usp_silencer", Team.CounterTerrorist, RoundType.Pistol),
-        new("hkp2000", Team.CounterTerrorist, RoundType.Pistol),
-        new("fiveseven", Team.CounterTerrorist, RoundType.Pistol),
-
-        new("p250", Team.Shared, RoundType.Pistol),
-        new("deagle", Team.Shared, RoundType.Pistol),
-
-        // Rifle
-        new("mac10", Team.Terrorist, RoundType.Rifle),
-        new("ak47", Team.Terrorist, RoundType.Rifle),
-        new("sg556", Team.Terrorist, RoundType.Rifle),
-        new("galilar", Team.Terrorist, RoundType.Rifle),
-
-        new("mp9", Team.CounterTerrorist, RoundType.Rifle),
-        new("m4a1", Team.CounterTerrorist, RoundType.Rifle),
-        new("m4a1_silencer", Team.CounterTerrorist, RoundType.Rifle),
-        new("aug", Team.CounterTerrorist, RoundType.Rifle),
-        new("famas", Team.CounterTerrorist, RoundType.Rifle),
-
-        new("ump45", Team.Shared, RoundType.Rifle),
-        new("mp5sd", Team.Shared, RoundType.Rifle),
-        new("p90", Team.Shared, RoundType.Rifle),
-        new("xm1014", Team.Shared, RoundType.Rifle),
-        new("ssg08", Team.Shared, RoundType.Rifle),
-        new("awp", Team.Shared, RoundType.Rifle)
-    ];
+    private Dictionary<string, WeaponItem> _weaponItems = null!;
 
     private readonly List<string> _poolTPistol = [];
     private readonly List<string> _poolCTPistol = [];
@@ -59,6 +28,8 @@ public sealed class BotBuyPlugin : BasePlugin
 
     public override void Load(bool hotReload)
     {
+        _weaponItems = Utility.WeaponItems;
+
         RegisterListener<Listeners.OnMapStart>(OnMapStart);
     }
 
@@ -214,7 +185,7 @@ public sealed class BotBuyPlugin : BasePlugin
 
             for (var i = 0; i < count; i++)
             {
-                var weaponItem = _weaponItems.First(x => x.Name == weaponName);
+                var weaponItem = _weaponItems[weaponName];
 
                 if (weaponItem.RoundType == RoundType.Pistol)
                 {

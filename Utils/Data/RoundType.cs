@@ -1,4 +1,4 @@
-﻿namespace BotBuy;
+﻿namespace Utils.Data;
 
 public enum RoundType
 {

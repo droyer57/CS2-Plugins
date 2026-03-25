@@ -23,6 +23,7 @@ public sealed class SwitchSidePlugin : BasePlugin
     private int _maxRounds = 11;
     private bool _hasReset;
     private bool _nextRoundReset;
+    private bool _midResetEnable = true;
 
     public override void Load(bool hotReload)
     {
@@ -59,7 +60,7 @@ public sealed class SwitchSidePlugin : BasePlugin
         else
             _nextRoundReset = totalScore == stopScore - 1;
 
-        if (_nextRoundReset)
+        if (_nextRoundReset && _midResetEnable)
         {
             Server.ExecuteCommand("mp_equipment_reset_rounds 1");
 
@@ -81,7 +82,7 @@ public sealed class SwitchSidePlugin : BasePlugin
         else
             canReset = totalScore == stopScore;
 
-        if (canReset && !_hasReset)
+        if (canReset && !_hasReset && _midResetEnable)
         {
             _hasReset = true;
 
@@ -129,7 +130,7 @@ public sealed class SwitchSidePlugin : BasePlugin
             return HookResult.Continue;
         }
 
-        if (_nextRoundReset)
+        if (_nextRoundReset && _midResetEnable)
         {
             Server.ExecuteCommand("css_botbuy_nextroundpistol");
             _nextRoundReset = false;
@@ -254,6 +255,28 @@ public sealed class SwitchSidePlugin : BasePlugin
         else
         {
             command.ReplyToCommand("Invalid value. Usage: css_switchside_maxrounds [int]");
+        }
+    }
+
+    [ConsoleCommand("css_switchside_midreset", "Get or set is there is a reset mid game")]
+    [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnMidResetCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        var arg = command.GetArg(1); // "0" or "1"
+
+        switch (arg)
+        {
+            case "1":
+                _midResetEnable = true;
+                command.ReplyToCommand($"[{ModuleName}] Enabled!");
+                break;
+            case "0":
+                _midResetEnable = false;
+                command.ReplyToCommand($"[{ModuleName}] Disabled!");
+                break;
+            default:
+                command.ReplyToCommand($"[{ModuleName}] Usage: css_switchside_midreset [0|1]");
+                break;
         }
     }
 

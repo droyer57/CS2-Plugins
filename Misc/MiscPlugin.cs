@@ -15,6 +15,8 @@ public sealed class MiscPlugin : BasePlugin
     [GameEventHandler]
     public HookResult OnRoundStart(EventRoundStart evt, GameEventInfo info)
     {
+        Server.ExecuteCommand("mp_death_drop_gun 1");
+
         if (Utility.IsWarmup)
         {
             return HookResult.Continue;
@@ -23,8 +25,6 @@ public sealed class MiscPlugin : BasePlugin
         var buyTime = ConVar.Find("mp_buytime")?.GetPrimitiveValue<float>() ?? 20;
         AddTimer(buyTime, () => Server.ExecuteCommand("mp_death_drop_gun 0"));
 
-        Server.ExecuteCommand("mp_death_drop_gun 1");
-
         return HookResult.Continue;
     }
 
@@ -32,7 +32,9 @@ public sealed class MiscPlugin : BasePlugin
     public HookResult OnPlayerDeath(EventPlayerDeath evt, GameEventInfo info)
     {
         if (Utility.IsWarmup)
+        {
             return HookResult.Continue;
+        }
 
         var player = evt.Userid;
 

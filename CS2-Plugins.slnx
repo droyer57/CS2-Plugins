@@ -10,6 +10,7 @@
     <Project Path="BotState/BotState.csproj" />
     <Project Path="C4Timer/C4Timer.csproj" />
   </Folder>
+  <Project Path="AutoWeapon/AutoWeapon.csproj" />
   <Project Path="HealthRegen/HealthRegen.csproj" />
   <Project Path="InfiniteAmmo/InfiniteAmmo.csproj" />
   <Project Path="Misc/Misc.csproj" />
