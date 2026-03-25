@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 using Microsoft.Extensions.Logging;
 using System.Text.Json.Serialization;
+using CounterStrikeSharp.API.Modules.Cvars;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 namespace C4Timer;
@@ -83,9 +84,17 @@ public class C4TimerPlugin : BasePlugin, IPluginConfig<C4TimerConfig>
             RegisterListener<Listeners.OnTick>(OnTick);
         }
 
-        ColorMsg(Config.TimeColor, _timeColor);
-        ColorMsg(Config.ProgressBarColor, _progressBarColor);
-        ColorMsg(Config.SidesTimerColor, _sidesTimerColor);
+        RegisterEventHandler<EventRoundStart>((_, _) =>
+        {
+            var c4Timer = ConVar.Find("mp_c4timer")?.GetPrimitiveValue<int>() ?? 40;
+            Config.TimerStarting = c4Timer;
+
+            ColorMsg(Config.TimeColor, _timeColor);
+            ColorMsg(Config.ProgressBarColor, _progressBarColor);
+            ColorMsg(Config.SidesTimerColor, _sidesTimerColor);
+
+            return HookResult.Continue;
+        });
     }
 
     private HookResult BombPlantedPost(EventBombPlanted @event, GameEventInfo info)
