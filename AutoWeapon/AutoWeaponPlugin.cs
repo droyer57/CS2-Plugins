@@ -22,6 +22,7 @@ public sealed class AutoWeaponPlugin : BasePlugin
     {
         RegisterListener<Listeners.OnMapStart>(_ =>
         {
+            _weaponQueue.Clear();
             ReadPool("weapons");
             Server.ExecuteCommand("css_switchside_midreset 0");
             Server.ExecuteCommand("css_botbuy 0");
