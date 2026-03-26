@@ -1,4 +1,5 @@
-﻿using CounterStrikeSharp.API;
+﻿using System.Drawing;
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using Utils;
@@ -21,14 +22,41 @@ public sealed class RevivePlugin : BasePlugin
 
     public override void Load(bool hotReload)
     {
+        RegisterListener<Listeners.OnServerPrecacheResources>(manifest =>
+        {
+            manifest.AddResource("models/coop/challenge_coin.vmdl");
+        });
+
         RegisterListener<Listeners.OnMapStart>(_ =>
         {
             //
             _playerStates.Clear();
+
+            // Force to cache the model first
+            Server.NextFrame(() =>
+            {
+                var prop = Helpers.CreateProp(Vector.Zero);
+                AddTimer(5, () => { prop.Remove(); });
+            });
         });
 
         RegisterEventHandler<EventPlayerHurt>(OnPlayerHurt, HookMode.Pre);
         RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
+
+        RegisterListener<Listeners.OnTick>(OnTick);
+    }
+
+    private void OnTick()
+    {
+        foreach (var (slot, playerState) in _playerStates)
+        {
+            playerState.OnTick();
+
+            if (playerState.IsPendingDestroy)
+            {
+                _playerStates.Remove(slot);
+            }
+        }
     }
 
     private HookResult OnPlayerHurt(EventPlayerHurt evt, GameEventInfo info)
@@ -49,7 +77,7 @@ public sealed class RevivePlugin : BasePlugin
         var playerState = GetPlayerState(player);
         if (playerState != null)
         {
-            _playerStates[player.Slot] = playerState.Value;
+            _playerStates[player.Slot] = playerState;
         }
 
         return HookResult.Continue;
@@ -61,68 +89,16 @@ public sealed class RevivePlugin : BasePlugin
         if (player == null || !player.IsValid)
             return HookResult.Continue;
 
-        var playerState = _playerStates[player.Slot];
-        var (deathPosition, deathAngle) = GetDeathPositionAndAngle(player);
-        playerState.SetDeathPositionAndAngle(deathPosition, deathAngle);
-
-        AddTimer(5, () =>
+        if (_playerStates.TryGetValue(player.Slot, out var playerState))
         {
-            if (!player.IsValid || player.PawnIsAlive)
-                return;
-
-            player.Respawn();
-            player.PlayerPawn.Value?.Teleport(playerState.DeathPosition, playerState.DeathAngle, Vector.Zero);
-            player.ResetInventory(this);
-            RestorePlayerInventory(player);
-        });
+            playerState.OnDeath();
+        }
 
         return HookResult.Continue;
     }
 
-    private void RestorePlayerInventory(CCSPlayerController player)
-    {
-        var playerState = _playerStates[player.Slot];
 
-        foreach (var weaponState in playerState.WeaponStates)
-        {
-            if (weaponState.IsGrenade)
-            {
-                for (var i = 0; i < weaponState.Count; i++)
-                    player.GiveNamedItem(weaponState.Name);
-            }
-            else
-            {
-                var weapon = player.GiveWeapon(weaponState.Name);
-                weapon.Clip1 = weaponState.Count;
-            }
-        }
-
-        if (playerState.HasHelmet)
-            player.GiveNamedItem("item_assaultsuit");
-        else if (playerState.ArmorValue > 0)
-            player.GiveNamedItem("item_kevlar");
-
-        if (playerState.HasDefuser)
-            player.GiveNamedItem("item_defuser");
-
-        player.PlayerPawn.Value!.ArmorValue = playerState.ArmorValue;
-    }
-
-    private static (Vector deathPosition, QAngle deathAngle) GetDeathPositionAndAngle(CCSPlayerController player)
-    {
-        var deathPosition = player.PlayerPawn.Value?.AbsOrigin;
-        var deathAngle = player.PlayerPawn.Value?.AbsRotation;
-
-        if (deathPosition == null)
-            return (Vector.Zero, QAngle.Zero);
-
-        var savedPosition = new Vector(deathPosition.X, deathPosition.Y, deathPosition.Z);
-        var savedAngle = new QAngle(deathAngle?.X ?? 0, deathAngle?.Y ?? 0, deathAngle?.Z ?? 0);
-
-        return (savedPosition, savedAngle);
-    }
-
-    private static PlayerState? GetPlayerState(CCSPlayerController player)
+    private PlayerState? GetPlayerState(CCSPlayerController player)
     {
         var playerPawn = player.PlayerPawn.Value;
         if (playerPawn == null || playerPawn.WeaponServices == null)
@@ -131,7 +107,7 @@ public sealed class RevivePlugin : BasePlugin
         var itemServices = playerPawn.ItemServices!.As<CCSPlayer_ItemServices>();
         var hasHelmet = itemServices.HasHelmet;
         var hasDefuser = itemServices.HasDefuser;
-        var playerState = new PlayerState(playerPawn.ArmorValue, hasHelmet, hasDefuser);
+        var playerState = new PlayerState(player, this, playerPawn.ArmorValue, hasHelmet, hasDefuser);
 
         foreach (var weaponHandle in playerPawn.WeaponServices.MyWeapons)
         {
