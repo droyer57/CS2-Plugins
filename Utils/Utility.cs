@@ -35,6 +35,7 @@ public static class Utility
     }
 
     public static IEnumerable<CCSPlayerController> HumanPlayers => Players.Where(x => !x.IsBot);
+    public static IEnumerable<CCSPlayerController> BotPlayers => Players.Where(x => x.IsBot);
 
     public static void PlaySoundToAllPlayers(string soundEventName)
     {

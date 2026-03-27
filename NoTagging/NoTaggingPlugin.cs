@@ -12,7 +12,7 @@ public sealed class NoTaggingPlugin : BasePlugin
     {
         // RegisterListener<Listeners.OnTick>(() =>
         // {
-        //     foreach (var player in Utilities.GetPlayers().Where(x =>
+        //     foreach (var player in Utility.HumanPlayers.Where(x =>
         //                  x is { IsValid: true, PawnIsAlive: true }))
         //     {
         //         var playerPawn = player.PlayerPawn.Value;

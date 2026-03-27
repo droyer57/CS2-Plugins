@@ -51,9 +51,9 @@ public sealed class BotBuyPlugin : BasePlugin
         _awpPlayers.Clear();
 
         var poolQueue = new Queue<string>();
-        foreach (var player in Utility.Players)
+        foreach (var player in Utility.BotPlayers)
         {
-            if (!player.IsValid || !player.IsBot || !player.PlayerPawn.IsValid)
+            if (!player.IsValid || !player.PlayerPawn.IsValid)
                 continue;
 
             var playerMoney = player.InGameMoneyServices;

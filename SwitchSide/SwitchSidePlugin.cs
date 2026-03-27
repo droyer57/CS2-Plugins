@@ -66,7 +66,7 @@ public sealed class SwitchSidePlugin : BasePlugin
 
             Server.NextFrame(() =>
             {
-                foreach (var player in Utilities.GetPlayers())
+                foreach (var player in Utility.HumanPlayers)
                 {
                     player.PrintToCenterAlert("Inventory reset next round !");
 
@@ -86,7 +86,7 @@ public sealed class SwitchSidePlugin : BasePlugin
         {
             _hasReset = true;
 
-            foreach (var player in Utilities.GetPlayers())
+            foreach (var player in Utility.HumanPlayers)
             {
                 ResetPlayer(player);
             }
@@ -94,7 +94,7 @@ public sealed class SwitchSidePlugin : BasePlugin
             Server.ExecuteCommand("mp_equipment_reset_rounds 0");
         }
 
-        foreach (var player in Utilities.GetPlayers())
+        foreach (var player in Utility.HumanPlayers)
         {
             if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
                 player.GiveNamedItem("item_defuser");

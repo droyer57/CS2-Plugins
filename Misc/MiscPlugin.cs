@@ -41,7 +41,7 @@ public sealed class MiscPlugin : BasePlugin
         if (player == null || !player.IsValid)
             return HookResult.Continue;
 
-        foreach (var otherPlayer in Utilities.GetPlayers())
+        foreach (var otherPlayer in Utility.HumanPlayers)
         {
             if (otherPlayer.Slot == player.Slot || otherPlayer.Team != player.Team)
                 continue;

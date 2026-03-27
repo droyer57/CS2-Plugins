@@ -2,6 +2,7 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
+using Utils;
 
 namespace SkinChanger;
 
@@ -9,7 +10,7 @@ public sealed class SkinChangerPlugin : BasePlugin
 {
     public override string ModuleName => "SkinChanger";
     public override string ModuleVersion => "1.0.0";
-    
+
     // Exec => 76561198018247650
     // Bipce => 76561198041968571
 
@@ -42,10 +43,9 @@ public sealed class SkinChangerPlugin : BasePlugin
 
     private HookResult OnRoundStart(EventRoundStart evt, GameEventInfo info)
     {
-        foreach (var player in Utilities.GetPlayers())
+        foreach (var player in Utility.HumanPlayers)
         {
             if (!player.IsValid
-                || player.IsBot
                 || !player.PlayerPawn.IsValid
                 || player.PlayerPawn.Value == null
                 || !player.PlayerPawn.Value.IsValid)
@@ -62,7 +62,7 @@ public sealed class SkinChangerPlugin : BasePlugin
             Server.NextFrame(() =>
             {
                 if (pawn == null || !pawn.IsValid) return;
-                
+
                 var model = (CsTeam)player.TeamNum == CsTeam.Terrorist ? models[0] : models[1];
                 pawn.SetModel(model);
                 var c = pawn.Render;
