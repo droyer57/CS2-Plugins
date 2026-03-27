@@ -48,6 +48,10 @@ public sealed class AutoWeaponPlugin : BasePlugin
 
         var weaponName = _weaponQueue.Dequeue();
 
+        var numFlash = Random.Shared.Next(3);
+        var numGrenade = Random.Shared.Next(2);
+        var numMolotov = Random.Shared.Next(2);
+
         foreach (var player in Utility.Players)
         {
             if (!player.PawnIsAlive)
@@ -90,6 +94,16 @@ public sealed class AutoWeaponPlugin : BasePlugin
 
             if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
                 player.GiveNamedItem("item_defuser");
+
+            if (!player.IsBot)
+            {
+                for (var i = 0; i < numFlash; i++)
+                    player.GiveNamedItem("weapon_flashbang");
+                if (numGrenade > 0)
+                    player.GiveNamedItem("weapon_hegrenade");
+                if (numMolotov > 0)
+                    player.GiveNamedItem(player.Team == CsTeam.Terrorist ? "weapon_molotov" : "weapon_incgrenade");
+            }
         }
 
         return HookResult.Continue;
