@@ -17,10 +17,7 @@ public static class Utility
         }
     }
 
-    public static IEnumerable<CCSPlayerController> Players =>
-        Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller");
-
-    public static IEnumerable<CCSPlayerController> HumanPlayers
+    public static IEnumerable<CCSPlayerController> Players
     {
         get
         {
@@ -36,6 +33,8 @@ public static class Utility
             }
         }
     }
+
+    public static IEnumerable<CCSPlayerController> HumanPlayers => Players.Where(x => !x.IsBot);
 
     public static void PlaySoundToAllPlayers(string soundEventName)
     {

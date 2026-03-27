@@ -78,7 +78,7 @@ public sealed class PlayerState
 
         _worldText.Remove();
         _prop?.Remove();
-        
+
         IsPendingDestroy = true;
     }
 
