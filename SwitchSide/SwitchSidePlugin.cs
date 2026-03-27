@@ -153,7 +153,7 @@ public sealed class SwitchSidePlugin : BasePlugin
             return HookResult.Continue;
         }
 
-        AddTimer(6.9f, () =>
+        AddTimer(6.0f, () =>
         {
             _teamAIsT = !_teamAIsT;
             SwapAllPlayers();
