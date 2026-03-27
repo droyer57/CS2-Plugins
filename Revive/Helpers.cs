@@ -7,59 +7,6 @@ namespace Revive;
 
 public static class Helpers
 {
-    public static void CreateReviveCircle(CCSPlayerController player)
-    {
-        Server.PrintToChatAll("CreateReviveCircle");
-
-        float radius = 50;
-        var pointCount = 100;
-
-        var point = player.PlayerPawn.Value!.AbsOrigin!;
-        point.Z += 16;
-
-        var start = new Vector();
-        var end = new Vector();
-
-        for (var i = 0; i < pointCount; i++)
-        {
-            var angle1 = i * (2 * Math.PI / pointCount);
-            var angle2 = (i + 1) * (2 * Math.PI / pointCount);
-
-            start.X = point.X + (float)(radius * Math.Cos(angle1));
-            start.Y = point.Y + (float)(radius * Math.Sin(angle1));
-            start.Z = point.Z;
-
-            end.X = point.X + (float)(radius * Math.Cos(angle2));
-            end.Y = point.Y + (float)(radius * Math.Sin(angle2));
-            end.Z = point.Z;
-
-            CreateBeamBetweenPoints(player, start, end);
-        }
-    }
-
-    public static CBeam CreateBeamBetweenPoints(CCSPlayerController? player, Vector start, Vector end)
-    {
-        var beam = Utilities.CreateEntityByName<CBeam>("beam");
-        if (beam == null || !beam.IsValid) return null!;
-
-        Server.PrintToChatAll("Create beam");
-
-        beam.Render = Color.Red;
-        beam.Width = 3.0f;
-        beam.EndWidth = 3.0f;
-
-        beam.Teleport(start);
-
-        beam.EndPos.X = end.X;
-        beam.EndPos.Y = end.Y;
-        beam.EndPos.Z = end.Z;
-
-        beam.DispatchSpawn();
-        // data.CircleBeam.Add(beam);
-        beam.AcceptInput("FollowEntity", beam, null!, "");
-        return beam;
-    }
-
     public static CPointWorldText CreateText(Vector position, string text, int size = 150)
     {
         var worldText = Utilities.CreateEntityByName<CPointWorldText>("point_worldtext");
