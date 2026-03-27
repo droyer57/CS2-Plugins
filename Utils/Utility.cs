@@ -20,9 +20,26 @@ public static class Utility
     public static IEnumerable<CCSPlayerController> Players =>
         Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller");
 
+    public static IEnumerable<CCSPlayerController> HumanPlayers
+    {
+        get
+        {
+            for (var i = 0; i < Server.MaxPlayers; i++)
+            {
+                var controller = Utilities.GetPlayerFromSlot(i);
+
+                if (controller == null || !controller.IsValid ||
+                    controller.Connected != PlayerConnectedState.PlayerConnected)
+                    continue;
+
+                yield return controller;
+            }
+        }
+    }
+
     public static void PlaySoundToAllPlayers(string soundEventName)
     {
-        foreach (var player in Utilities.GetPlayers())
+        foreach (var player in HumanPlayers)
         {
             RecipientFilter filter = [player];
             player.EmitSound(soundEventName, recipients: filter);

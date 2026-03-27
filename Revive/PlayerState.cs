@@ -1,4 +1,5 @@
-﻿using CounterStrikeSharp.API;
+﻿using System.Globalization;
+using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using Utils;
@@ -24,12 +25,16 @@ public sealed class PlayerState
     private CDynamicProp? _prop;
 
     private readonly BasePlugin _plugin;
-    private Timer? _timer;
-    public bool IsPendingDestroy { get; set; }
+
+    public bool IsPendingDestroy { get; private set; }
     private int _playerInZoneCount;
     private readonly Dictionary<int, bool> _playerInZone = [];
-    private float _lastTick;
     private float _propRotation;
+
+    public float DownTimer { get; private set; } = RevivePlugin.DownTime;
+    public float RespawnTimer { get; private set; }
+
+    public bool SomeoneInZone => _playerInZoneCount > 0;
 
     public PlayerState(CCSPlayerController controller, BasePlugin plugin, int armorValue, bool hasHelmet,
         bool hasDefuser)
@@ -49,6 +54,14 @@ public sealed class PlayerState
         RestorePlayerInventory();
         Remove();
         Utility.PlaySoundToAllPlayers("TeammateRevived");
+        IsPendingDestroy = true;
+    }
+
+    private void Dead()
+    {
+        Remove();
+        Utility.PlaySoundToAllPlayers("TeammateDead");
+        IsPendingDestroy = true;
     }
 
     public void Remove()
@@ -114,19 +127,15 @@ public sealed class PlayerState
         return (savedPosition, savedAngle);
     }
 
-    public void OnTick()
+    public void OnTick(float deltaTime)
     {
-        var currentTime = Server.CurrentTime;
-        var deltaTime = currentTime - _lastTick;
-        _lastTick = currentTime;
-
         if (_prop?.IsValid == true)
         {
             _propRotation = (_propRotation + 180f * deltaTime) % 360f;
             _prop.Teleport(null, new QAngle(0, _propRotation, 0));
         }
 
-        foreach (var player in Utilities.GetPlayers().Where(x => x.Slot != Slot))
+        foreach (var player in Utility.HumanPlayers.Where(x => x.Slot != Slot))
         {
             var playerPosition = player.PlayerPawn.Value?.AbsOrigin;
             if (playerPosition == null)
@@ -140,41 +149,41 @@ public sealed class PlayerState
                 _playerInZone.Add(player.Slot, isInZone);
             }
 
-            if (distance <= 50 && !isInZone)
+            if (distance <= RevivePlugin.RespawnDistance && !isInZone)
             {
-                OnZoneEnter();
+                _playerInZoneCount++;
                 isInZone = true;
             }
-            else if (distance > 50 && isInZone)
+            else if (distance > RevivePlugin.RespawnDistance && isInZone)
             {
-                OnZoneExit();
+                _playerInZoneCount--;
                 isInZone = false;
             }
 
             _playerInZone[player.Slot] = isInZone;
         }
-    }
 
-    private void OnZoneEnter()
-    {
-        _playerInZoneCount++;
-        if (_playerInZoneCount != 1)
-            return;
-
-        _timer = _plugin.AddTimer(3, () =>
+        if (_playerInZoneCount > 0)
         {
-            Respawn();
-            IsPendingDestroy = true;
-        });
-    }
+            RespawnTimer += deltaTime;
+            if (RespawnTimer >= RevivePlugin.RespawnTime)
+            {
+                RespawnTimer = RevivePlugin.RespawnTime;
+                Respawn();
+            }
+        }
+        else if (_playerInZoneCount == 0)
+        {
+            DownTimer -= deltaTime;
+            if (DownTimer <= 0)
+            {
+                DownTimer = 0;
+                Dead();
+            }
 
-    private void OnZoneExit()
-    {
-        _playerInZoneCount--;
-        if (_playerInZoneCount != 0)
-            return;
-
-        _timer?.Kill();
-        _timer = null;
+            RespawnTimer -= deltaTime;
+            if (RespawnTimer <= 0)
+                RespawnTimer = 0;
+        }
     }
 }

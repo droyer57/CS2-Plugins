@@ -11,6 +11,11 @@ public sealed class RevivePlugin : BasePlugin
     public override string ModuleVersion => "1.0.0";
 
     private readonly Dictionary<int, PlayerState> _playerStates = [];
+    private float _lastTick;
+
+    public const float RespawnDistance = 50;
+    public const float RespawnTime = 10;
+    public const float DownTime = 20;
 
     private static readonly Dictionary<int, string> DefIndexToWeaponName = new()
     {
@@ -52,14 +57,38 @@ public sealed class RevivePlugin : BasePlugin
             return;
         }
 
+        var currentTime = Server.CurrentTime;
+        var deltaTime = currentTime - _lastTick;
+        _lastTick = currentTime;
+
+        var message = string.Empty;
+
         foreach (var (slot, playerState) in _playerStates)
         {
-            playerState.OnTick();
+            if (!string.IsNullOrEmpty(message))
+                message += "\n";
+
+            playerState.OnTick(deltaTime);
+
+            var downTimer = (int)MathF.Ceiling(playerState.DownTimer);
+            var respawnTimer = (int)MathF.Floor(playerState.RespawnTimer);
+
+            var delta = playerState.SomeoneInZone ? "+" : "-";
+            var timer = playerState.SomeoneInZone ? respawnTimer : downTimer;
+            message += $"{playerState.Controller.PlayerName}: {timer} [ {delta} ]";
 
             if (playerState.IsPendingDestroy)
             {
                 _playerStates.Remove(slot);
             }
+        }
+
+        if (string.IsNullOrEmpty(message))
+            return;
+
+        foreach (var player in Utility.HumanPlayers)
+        {
+            player.PrintToCenterAlert(message);
         }
     }
 
