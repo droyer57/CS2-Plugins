@@ -19,7 +19,7 @@ public sealed class PlayerState
     public int Slot => Controller.Slot;
 
     private CBeam[] _beams = null!;
-    private CPointWorldText _worldText = null!;
+    private CPointWorldText? _worldText;
     private CDynamicProp? _prop;
 
     private readonly BasePlugin _plugin;
@@ -34,11 +34,11 @@ public sealed class PlayerState
 
     public bool SomeoneInZone => _playerInZoneCount > 0;
 
-    private static Dictionary<string, WeaponItem> _weaponItems;
+    private static readonly Dictionary<string, WeaponItem> WeaponItems;
 
     static PlayerState()
     {
-        _weaponItems = Utility.WeaponItems;
+        WeaponItems = Utility.WeaponItems;
     }
 
     public PlayerState(CCSPlayerController controller, BasePlugin plugin, int armorValue, bool hasHelmet,
@@ -76,8 +76,11 @@ public sealed class PlayerState
             beam.Remove();
         }
 
-        _worldText.Remove();
+        _worldText?.Remove();
+        _worldText = null;
+
         _prop?.Remove();
+        _prop = null;
 
         IsPendingDestroy = true;
     }
@@ -95,7 +98,7 @@ public sealed class PlayerState
             {
                 var originalTeam = Controller.Team;
                 var weaponName = weaponState.Name.Replace("weapon_", "");
-                var weaponTeam = _weaponItems[weaponName].Team;
+                var weaponTeam = WeaponItems[weaponName].Team;
 
                 if (weaponTeam != Team.Shared && (int)weaponTeam != (int)Controller.Team)
                 {
@@ -170,11 +173,16 @@ public sealed class PlayerState
             if (distance <= RevivePlugin.RespawnDistance && !isInZone)
             {
                 _playerInZoneCount++;
+                if (_playerInZoneCount == 1)
+                    OnZoneEnter();
+
                 isInZone = true;
             }
             else if (distance > RevivePlugin.RespawnDistance && isInZone)
             {
                 _playerInZoneCount--;
+                if (_playerInZoneCount == 0)
+                    OnZoneExit();
                 isInZone = false;
             }
 
@@ -203,5 +211,21 @@ public sealed class PlayerState
             if (RespawnTimer <= 0)
                 RespawnTimer = 0;
         }
+    }
+
+    private void OnZoneEnter()
+    {
+        _worldText?.Remove();
+        _worldText = null;
+        _prop?.Remove();
+        _prop = null;
+    }
+
+    private void OnZoneExit()
+    {
+        if (_worldText == null || !_worldText.IsValid)
+            _worldText = Helpers.CreateText(DeathPosition + new Vector(0, 0, 32), Controller.PlayerName);
+        if (_prop == null || !_prop.IsValid)
+            _prop = Helpers.CreateProp(DeathPosition + new Vector(0, 0, 48));
     }
 }
