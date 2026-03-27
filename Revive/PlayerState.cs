@@ -1,9 +1,7 @@
-﻿using System.Globalization;
-using CounterStrikeSharp.API;
-using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using Utils;
-using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
+using Utils.Data;
 
 namespace Revive;
 
@@ -36,6 +34,13 @@ public sealed class PlayerState
 
     public bool SomeoneInZone => _playerInZoneCount > 0;
 
+    private static Dictionary<string, WeaponItem> _weaponItems;
+
+    static PlayerState()
+    {
+        _weaponItems = Utility.WeaponItems;
+    }
+
     public PlayerState(CCSPlayerController controller, BasePlugin plugin, int armorValue, bool hasHelmet,
         bool hasDefuser)
     {
@@ -50,7 +55,7 @@ public sealed class PlayerState
     {
         Controller.Respawn();
         Controller.PlayerPawn.Value?.Teleport(DeathPosition, DeathAngle, Vector.Zero);
-        Controller.ResetInventory(_plugin);
+        Controller.ResetInventory(_plugin, "weapon_knife");
         RestorePlayerInventory();
         Remove();
         Utility.PlaySoundToAllPlayers("TeammateRevived");
@@ -73,6 +78,8 @@ public sealed class PlayerState
 
         _worldText.Remove();
         _prop?.Remove();
+        
+        IsPendingDestroy = true;
     }
 
     private void RestorePlayerInventory()
@@ -86,8 +93,19 @@ public sealed class PlayerState
             }
             else
             {
+                var originalTeam = Controller.Team;
+                var weaponName = weaponState.Name.Replace("weapon_", "");
+                var weaponTeam = _weaponItems[weaponName].Team;
+
+                if (weaponTeam != Team.Shared && (int)weaponTeam != (int)Controller.Team)
+                {
+                    Controller.SwitchTeam((CsTeam)weaponTeam);
+                }
+
                 var weapon = Controller.GiveWeapon(weaponState.Name);
                 weapon.Clip1 = weaponState.Count;
+
+                Controller.SwitchTeam(originalTeam);
             }
         }
 

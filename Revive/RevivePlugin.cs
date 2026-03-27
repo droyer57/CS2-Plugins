@@ -99,11 +99,12 @@ public sealed class RevivePlugin : BasePlugin
             return HookResult.Continue;
         }
 
-        foreach (var (slot, playerState) in _playerStates)
+        foreach (var (_, playerState) in _playerStates)
         {
             playerState.Remove();
-            _playerStates.Remove(slot);
         }
+
+        _playerStates.Clear();
 
         return HookResult.Continue;
     }
@@ -156,7 +157,6 @@ public sealed class RevivePlugin : BasePlugin
         return HookResult.Continue;
     }
 
-
     private PlayerState? GetPlayerState(CCSPlayerController player)
     {
         var playerPawn = player.PlayerPawn.Value;
@@ -189,7 +189,7 @@ public sealed class RevivePlugin : BasePlugin
 
                 playerState.WeaponStates.Add(new WeaponState(name, grenadeCount, isGrenade));
             }
-            else
+            else if (name != "weapon_knife" && name != "weapon_c4")
             {
                 playerState.WeaponStates.Add(new WeaponState(name, weapon.Clip1, isGrenade));
             }
