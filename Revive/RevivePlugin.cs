@@ -117,7 +117,7 @@ public sealed class RevivePlugin : BasePlugin
         }
 
         var player = evt.Userid;
-        if (player == null || !player.IsValid)
+        if (player == null || !player.IsValid || player.IsBot)
             return HookResult.Continue;
 
         var playerPawn = player.PlayerPawn.Value;
@@ -146,7 +146,7 @@ public sealed class RevivePlugin : BasePlugin
         }
 
         var player = evt.Userid;
-        if (player == null || !player.IsValid)
+        if (player == null || !player.IsValid || player.IsBot)
             return HookResult.Continue;
 
         if (_playerStates.TryGetValue(player.Slot, out var playerState))
