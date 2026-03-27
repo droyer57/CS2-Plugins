@@ -1,6 +1,5 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
-using CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API.Modules.Utils;
 using Utils;
 using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
@@ -48,7 +47,12 @@ public sealed class PlayerState
         Controller.PlayerPawn.Value?.Teleport(DeathPosition, DeathAngle, Vector.Zero);
         Controller.ResetInventory(_plugin);
         RestorePlayerInventory();
+        Remove();
+        Utility.PlaySoundToAllPlayers("TeammateRevived");
+    }
 
+    public void Remove()
+    {
         foreach (var beam in _beams)
         {
             beam.Remove();
@@ -56,8 +60,6 @@ public sealed class PlayerState
 
         _worldText.Remove();
         _prop?.Remove();
-
-        Utility.PlaySoundToAllPlayers("TeammateRevived");
     }
 
     private void RestorePlayerInventory()
@@ -93,7 +95,7 @@ public sealed class PlayerState
         DeathPosition = deathPosition;
         DeathAngle = deathAngle;
 
-        _beams = Helpers.DrawBeaconCircleOnPlayer(DeathPosition);
+        _beams = Helpers.DrawBeaconCircle(DeathPosition);
         _worldText = Helpers.CreateText(DeathPosition + new Vector(0, 0, 32), Controller.PlayerName);
         _prop = Helpers.CreateProp(DeathPosition + new Vector(0, 0, 48));
     }

@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using CounterStrikeSharp.API;
+﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
 using Utils;
@@ -29,7 +28,6 @@ public sealed class RevivePlugin : BasePlugin
 
         RegisterListener<Listeners.OnMapStart>(_ =>
         {
-            //
             _playerStates.Clear();
 
             // Force to cache the model first
@@ -42,12 +40,18 @@ public sealed class RevivePlugin : BasePlugin
 
         RegisterEventHandler<EventPlayerHurt>(OnPlayerHurt, HookMode.Pre);
         RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
+        RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
 
         RegisterListener<Listeners.OnTick>(OnTick);
     }
 
     private void OnTick()
     {
+        if (Utility.IsWarmup)
+        {
+            return;
+        }
+
         foreach (var (slot, playerState) in _playerStates)
         {
             playerState.OnTick();
@@ -59,8 +63,29 @@ public sealed class RevivePlugin : BasePlugin
         }
     }
 
+    private HookResult OnRoundEnd(EventRoundEnd evt, GameEventInfo info)
+    {
+        if (Utility.IsWarmup)
+        {
+            return HookResult.Continue;
+        }
+
+        foreach (var (slot, playerState) in _playerStates)
+        {
+            playerState.Remove();
+            _playerStates.Remove(slot);
+        }
+
+        return HookResult.Continue;
+    }
+
     private HookResult OnPlayerHurt(EventPlayerHurt evt, GameEventInfo info)
     {
+        if (Utility.IsWarmup)
+        {
+            return HookResult.Continue;
+        }
+
         var player = evt.Userid;
         if (player == null || !player.IsValid)
             return HookResult.Continue;
@@ -85,6 +110,11 @@ public sealed class RevivePlugin : BasePlugin
 
     private HookResult OnPlayerDeath(EventPlayerDeath evt, GameEventInfo info)
     {
+        if (Utility.IsWarmup)
+        {
+            return HookResult.Continue;
+        }
+
         var player = evt.Userid;
         if (player == null || !player.IsValid)
             return HookResult.Continue;

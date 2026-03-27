@@ -107,7 +107,7 @@ public static class Helpers
         return prop;
     }
 
-    public static CBeam[] DrawBeaconCircleOnPlayer(Vector position)
+    public static CBeam[] DrawBeaconCircle(Vector position)
     {
         var lines = 20;
         var beamEnt = new CBeam[lines];
