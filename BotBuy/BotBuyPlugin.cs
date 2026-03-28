@@ -213,24 +213,9 @@ public sealed class BotBuyPlugin : BasePlugin
     }
 
     [ConsoleCommand("css_botbuy", "Enable or disable bot buy plugin")]
-    [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
     public void OnBotBuyCommand(CCSPlayerController? player, CommandInfo command)
     {
-        var arg = command.GetArg(1); // "0" or "1"
-
-        switch (arg)
-        {
-            case "1":
-                _isEnable = true;
-                command.ReplyToCommand($"[{ModuleName}] Enabled!");
-                break;
-            case "0":
-                _isEnable = false;
-                command.ReplyToCommand($"[{ModuleName}] Disabled!");
-                break;
-            default:
-                command.ReplyToCommand($"[{ModuleName}] Usage: css_botbuy [0|1]");
-                break;
-        }
+        Utility.UseCommand(command, ref _isEnable);
     }
 }
