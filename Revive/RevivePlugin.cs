@@ -1,5 +1,7 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
 using Utils;
 
@@ -12,10 +14,11 @@ public sealed class RevivePlugin : BasePlugin
 
     private readonly Dictionary<int, PlayerState> _playerStates = [];
     private float _lastTick;
+    private bool _enable = true;
 
-    public const float RespawnDistance = 50;
-    public const float RespawnTime = 10;
-    public const float DownTime = 20;
+    public static float RespawnDistance { get; private set; } = 50;
+    public static float RespawnTime { get; private set; } = 10;
+    public static float DownTime { get; private set; } = 20;
 
     private static readonly Dictionary<int, string> DefIndexToWeaponName = new()
     {
@@ -52,7 +55,7 @@ public sealed class RevivePlugin : BasePlugin
 
     private void OnTick()
     {
-        if (Utility.IsWarmup)
+        if (!_enable || Utility.IsWarmup)
         {
             return;
         }
@@ -94,7 +97,7 @@ public sealed class RevivePlugin : BasePlugin
 
     private HookResult OnRoundEnd(EventRoundEnd evt, GameEventInfo info)
     {
-        if (Utility.IsWarmup)
+        if (!_enable || Utility.IsWarmup)
         {
             return HookResult.Continue;
         }
@@ -111,7 +114,7 @@ public sealed class RevivePlugin : BasePlugin
 
     private HookResult OnPlayerHurt(EventPlayerHurt evt, GameEventInfo info)
     {
-        if (Utility.IsWarmup)
+        if (!_enable || Utility.IsWarmup)
         {
             return HookResult.Continue;
         }
@@ -140,7 +143,7 @@ public sealed class RevivePlugin : BasePlugin
 
     private HookResult OnPlayerDeath(EventPlayerDeath evt, GameEventInfo info)
     {
-        if (Utility.IsWarmup)
+        if (!_enable || Utility.IsWarmup)
         {
             return HookResult.Continue;
         }
@@ -206,5 +209,33 @@ public sealed class RevivePlugin : BasePlugin
             return correctName;
 
         return weapon.DesignerName;
+    }
+
+    [ConsoleCommand("css_revive", "Enable or disable the revive plugin")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnReviveCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        Utility.UseCommand(command, ref _enable);
+    }
+
+    [ConsoleCommand("css_revive_respawndistance", "Get or set the respawn distance")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnRespawnDistanceCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        RespawnDistance = Utility.UseCommand(command, RespawnDistance);
+    }
+
+    [ConsoleCommand("css_revive_respawntime", "Get or set the respawn time")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnRespawnTimeCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        RespawnTime = Utility.UseCommand(command, RespawnTime);
+    }
+
+    [ConsoleCommand("css_revive_downtime", "Get or set the down time")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnDownTimeCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        DownTime = Utility.UseCommand(command, DownTime);
     }
 }

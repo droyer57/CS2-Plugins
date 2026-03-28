@@ -129,7 +129,7 @@ public sealed class PlayerState
         DeathPosition = deathPosition;
         DeathAngle = deathAngle;
 
-        _beams = Helpers.DrawBeaconCircle(DeathPosition);
+        _beams = Helpers.DrawBeaconCircle(DeathPosition, RevivePlugin.RespawnDistance);
         _worldText = Helpers.CreateText(DeathPosition + new Vector(0, 0, 32), Controller.PlayerName);
         _prop = Helpers.CreateProp(DeathPosition + new Vector(0, 0, 48));
     }

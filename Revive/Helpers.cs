@@ -54,7 +54,7 @@ public static class Helpers
         return prop;
     }
 
-    public static CBeam[] DrawBeaconCircle(Vector position)
+    public static CBeam[] DrawBeaconCircle(Vector position, float radius)
     {
         var lines = 20;
         var beamEnt = new CBeam[lines];
@@ -62,7 +62,6 @@ public static class Helpers
         // draw piecewise approx by stepping angle
         // and joining points with a dot to dot
         var step = (float)(2.0f * Math.PI) / lines;
-        var radius = 50;
 
         var angleOld = 0.0f;
         var angleCur = step;
