@@ -3,7 +3,6 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Modules.Cvars;
-using CounterStrikeSharp.API.Modules.Utils;
 using System;
 
 namespace BotState;
@@ -11,7 +10,7 @@ namespace BotState;
 public class BotState : BasePlugin
 {
     public override string ModuleName        => "Smarter-Bot";
-    public override string ModuleVersion     => "1.5.0";
+    public override string ModuleVersion     => "1.3.1";
     public override string ModuleAuthor      => "ed0ard";
     public override string ModuleDescription => "Make bots smarter";
 
@@ -21,12 +20,8 @@ public class BotState : BasePlugin
 
     private bool _isExpanded = false;
     private ConVar? _smokeConVar;
-
+    
     private readonly Random _random = new Random();
-
-    private readonly Dictionary<int, bool> _prevIsAttacking = new();
-    private readonly Dictionary<int, bool> _prevInAir       = new();
-    private readonly Dictionary<int, float> _ladderExitTime = new();
 
     public override void Load(bool hotReload)
     {
@@ -35,7 +30,6 @@ public class BotState : BasePlugin
         RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawn);
         RegisterEventHandler<EventRoundFreezeEnd>(OnRoundFreezeEnd);
         // RegisterEventHandler<EventPlayerBlind>(OnPlayerBlind);
-        RegisterEventHandler<EventBombPlanted>(OnBombPlanted);
         RegisterListener<Listeners.OnTick>(OnTick);
     }
 
@@ -102,7 +96,7 @@ public class BotState : BasePlugin
                 flashMaxAlpha = 0f;   
             }
         }
-        
+
         return HookResult.Continue;
     }
 //---------------------------------------------------------------------------------------
@@ -125,7 +119,7 @@ public class BotState : BasePlugin
     [GameEventHandler]
     public HookResult OnRoundFreezeEnd(EventRoundFreezeEnd @event, GameEventInfo info)
     {
-        foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+        foreach (var player in Utilities.GetPlayers())
         {
             if (!player.IsValid || !player.IsBot) continue;
             ApplyBotState(player);
@@ -135,151 +129,31 @@ public class BotState : BasePlugin
 
     private void OnTick()
     {
-        foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
+        foreach (var player in Utilities.GetPlayers())
         {
-            if (!player.IsValid || !player.IsBot)
-                continue;
-
+            if (!player.IsValid || !player.IsBot) continue;
+            
             var pawn = player.PlayerPawn.Value;
-            if (pawn == null || !pawn.IsValid) 
-                continue;
+            if (pawn == null || !pawn.IsValid) continue;
 
             var bot = pawn.Bot;
-            if (bot == null) 
-                continue;
+            if (bot == null) continue;
 
-            int idx = (int)player.Index;
+            ref bool allowActive = ref bot.AllowActive;
+            allowActive = true;
+
+            ref bool botAllowActive = ref pawn.BotAllowActive;
+            botAllowActive = true;
 
             ref bool isSleeping = ref bot.IsSleeping;
             isSleeping = false;
 
-            ref bool allowActive = ref bot.AllowActive;
-            allowActive = true;
-            
-            ref bool isRapidFiring = ref bot.IsRapidFiring;
-            isRapidFiring = true;
-
-            ref float fireWeaponTimestamp = ref bot.FireWeaponTimestamp;
-            fireWeaponTimestamp = 0.0f;
-
-            ref float duration = ref bot.IgnoreEnemiesTimer.Duration;
-            duration = 0.0f;
-  
-            // Random combat crouch
-            bool curIsAttacking = bot.IsAttacking;
-            _prevIsAttacking.TryGetValue(idx, out bool prevIsAttacking);
-            if (curIsAttacking && !prevIsAttacking)
-            {
-                ref bool isCrouching = ref bot.IsCrouching;
-                isCrouching = _random.NextDouble() < 0.4;
-
-                CountdownTimer sneakTimer = bot.SneakTimer;
-
-                ref float sneakduration = ref sneakTimer.Duration;
-                sneakduration = 0.0f;
-
-                ref float sneaktimestamp = ref sneakTimer.Timestamp;
-                sneaktimestamp = 0.0f;
-
-                ref float sneaktimescale = ref sneakTimer.Timescale;
-                sneaktimescale = 1.0f;
-            }
-            _prevIsAttacking[idx] = curIsAttacking;
-
-            var moveServices = pawn.MovementServices as CCSPlayer_MovementServices;
-            var ladderNormal = moveServices?.LadderNormal;
-
-            bool nearLadder = pawn.MoveType == MoveType_t.MOVETYPE_LADDER
-                        || (ladderNormal != null
-                            && (ladderNormal.X != 0f || ladderNormal.Y != 0f || ladderNormal.Z != 0f));
-
-            if (nearLadder) _ladderExitTime[idx] = Server.CurrentTime;
-
-            bool inLadderCooldown = nearLadder
-                || (_ladderExitTime.TryGetValue(idx, out float exitTime)
-                    && Server.CurrentTime - exitTime < 5.0f);
-
-            bool inAir = !inLadderCooldown
-                    && (pawn.GroundEntity == null || !pawn.GroundEntity.IsValid);
-
-            if (inAir)
-            {
-                ref bool isCrouching = ref bot.IsCrouching;
-                isCrouching = true;
-
-                var angles = pawn.EyeAngles;
-                float yaw = angles.Y * MathF.PI / 180f;
-                float fwdX = MathF.Cos(yaw);
-                float fwdY = MathF.Sin(yaw);
-
-                float currentFwd = pawn.AbsVelocity.X * fwdX + pawn.AbsVelocity.Y * fwdY;
-                const float targetFwd = 200f;
-                if (currentFwd < targetFwd)
-                {
-                    float boost = targetFwd - currentFwd;
-                    pawn.AbsVelocity.X += fwdX * boost;
-                    pawn.AbsVelocity.Y += fwdY * boost;
-                }
-            }
-
-            _prevInAir.TryGetValue(idx, out bool prevInAir);
-            if (prevInAir && !inAir)
-            {
-                ref bool isCrouching = ref bot.IsCrouching;
-                isCrouching = false;
-            }
-            _prevInAir[idx] = inAir;
-
             ref bool isStuck = ref bot.IsStuck;
-            if (isStuck)
-            {
-                ref bool isRunning = ref bot.IsRunning;
-                isRunning = true;
+            isStuck = false;
 
-                ref float jumpTimestamp = ref bot.JumpTimestamp;
-                jumpTimestamp = 0.0f;
-
-                CountdownTimer stuckJumpTimer = bot.StuckJumpTimer;
-
-                ref float stuckduration = ref stuckJumpTimer.Duration;
-                stuckduration = 0.0f;
-
-                ref float stucktimestamp = ref stuckJumpTimer.Timestamp;
-                stucktimestamp = Server.CurrentTime;
-
-                ref float stucktimescale = ref stuckJumpTimer.Timescale;
-                stucktimescale = 1.0f;
-            }
+            ref float idleTimeSinceLastAction = ref pawn.IdleTimeSinceLastAction;
+            idleTimeSinceLastAction = 0f;
         }
-    }
-
-    private HookResult OnBombPlanted(EventBombPlanted @event, GameEventInfo info)
-    {
-        foreach (var player in Utilities.FindAllEntitiesByDesignerName<CCSPlayerController>("cs_player_controller"))
-        {
-            if (!player.IsValid || !player.IsBot)
-                continue;
-
-            var pawn = player.PlayerPawn.Value;
-            if (pawn == null || !pawn.IsValid)
-                continue;
-
-            var bot = pawn.Bot;
-            if (bot == null)
-                continue;
-
-            CountdownTimer hurryTimer = bot.HurryTimer;
-
-            ref float duration = ref hurryTimer.Duration;
-            duration = 40.0f;
-
-            ref float timestamp = ref hurryTimer.Timestamp;
-            timestamp = Server.CurrentTime;
-
-            ref float timescale = ref hurryTimer.Timescale;
-            timescale = 1.0f;
-        }
-        return HookResult.Continue;
     }
 
     private static void ApplyBotState(CCSPlayerController player)
