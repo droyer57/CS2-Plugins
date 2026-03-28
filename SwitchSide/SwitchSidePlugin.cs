@@ -216,68 +216,24 @@ public sealed class SwitchSidePlugin : BasePlugin
     #region Commands
 
     [ConsoleCommand("css_switchside", "Enable or disable switch side plugin")]
-    [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
     public void OnSwitchSideCommand(CCSPlayerController? player, CommandInfo command)
     {
-        var arg = command.GetArg(1); // "0" or "1"
-
-        switch (arg)
-        {
-            case "1":
-                _isEnable = true;
-                command.ReplyToCommand("[SwitchSide] Enabled!");
-                break;
-            case "0":
-                _isEnable = false;
-                command.ReplyToCommand("[SwitchSide] Disabled!");
-                break;
-            default:
-                command.ReplyToCommand("[SwitchSide] Usage: css_switchside [0|1]");
-                break;
-        }
+        Utility.UseCommand(command, ref _isEnable);
     }
 
     [ConsoleCommand("css_switchside_maxrounds", "Get or set the max rounds")]
-    [CommandHelper(minArgs: 0, whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
     public void OnMaxRoundsCommand(CCSPlayerController? player, CommandInfo command)
     {
-        if (command.ArgCount < 2)
-        {
-            command.ReplyToCommand($"css_switchside_maxrounds = {_maxRounds}");
-            return;
-        }
-
-        if (int.TryParse(command.GetArg(1), out var value))
-        {
-            _maxRounds = value;
-            command.ReplyToCommand($"css_switchside_maxrounds = {value}");
-        }
-        else
-        {
-            command.ReplyToCommand("Invalid value. Usage: css_switchside_maxrounds [int]");
-        }
+        Utility.UseCommand(command, ref _maxRounds);
     }
 
-    [ConsoleCommand("css_switchside_midreset", "Get or set is there is a reset mid game")]
-    [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    [ConsoleCommand("css_switchside_midreset", "Get or set if there is a reset mid game")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
     public void OnMidResetCommand(CCSPlayerController? player, CommandInfo command)
     {
-        var arg = command.GetArg(1); // "0" or "1"
-
-        switch (arg)
-        {
-            case "1":
-                _midResetEnable = true;
-                command.ReplyToCommand($"[{ModuleName}] Enabled!");
-                break;
-            case "0":
-                _midResetEnable = false;
-                command.ReplyToCommand($"[{ModuleName}] Disabled!");
-                break;
-            default:
-                command.ReplyToCommand($"[{ModuleName}] Usage: css_switchside_midreset [0|1]");
-                break;
-        }
+        Utility.UseCommand(command, ref _midResetEnable);
     }
 
     #endregion

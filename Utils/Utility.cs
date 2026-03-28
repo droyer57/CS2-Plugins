@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
 using Utils.Data;
 
@@ -85,4 +86,51 @@ public static class Utility
             { "negev", new WeaponItem("negev", Team.Shared, RoundType.Rifle) },
             { "m249", new WeaponItem("m249", Team.Shared, RoundType.Rifle) }
         };
+
+    public static void UseCommand<T>(CommandInfo command, ref T value)
+    {
+        if (command.ArgCount < 2)
+        {
+            command.ReplyToCommand($"Value is {value}");
+            return;
+        }
+
+        var arg = command.GetArg(1);
+
+        try
+        {
+            object converted;
+
+            if (typeof(T) == typeof(bool))
+            {
+                converted = arg switch
+                {
+                    "1" => true,
+                    "yes" => true,
+                    "on" => true,
+                    "0" => false,
+                    "no" => false,
+                    "off" => false,
+                    _ => bool.Parse(arg)
+                };
+            }
+            else
+            {
+                converted = Convert.ChangeType(arg, typeof(T));
+            }
+
+            value = (T)converted;
+            command.ReplyToCommand($"Value set to {value}");
+        }
+        catch
+        {
+            command.ReplyToCommand("Invalid value");
+        }
+    }
+
+    public static T UseCommand<T>(CommandInfo command, T value)
+    {
+        UseCommand(command, ref value);
+        return value;
+    }
 }

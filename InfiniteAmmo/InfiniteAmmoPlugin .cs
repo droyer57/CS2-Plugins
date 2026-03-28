@@ -1,7 +1,7 @@
-﻿using CounterStrikeSharp.API;
-using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Commands;
+using Utils;
 
 namespace InfiniteAmmo;
 
@@ -84,24 +84,9 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
     }
 
     [ConsoleCommand("css_infiniteammo", "Enable or disable switch side plugin")]
-    [CommandHelper(minArgs: 1, usage: "[0|1]", whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
     public void OnInfiniteAmmoCommand(CCSPlayerController? player, CommandInfo command)
     {
-        var arg = command.GetArg(1); // "0" or "1"
-
-        switch (arg)
-        {
-            case "1":
-                _enabled = true;
-                command.ReplyToCommand($"[{ModuleName}] Enabled!");
-                break;
-            case "0":
-                _enabled = false;
-                command.ReplyToCommand($"[{ModuleName}] Disabled!");
-                break;
-            default:
-                command.ReplyToCommand($"[{ModuleName}] Usage: css_infiniteammo [0|1]");
-                break;
-        }
+        Utility.UseCommand(command, ref _enabled);
     }
 }
