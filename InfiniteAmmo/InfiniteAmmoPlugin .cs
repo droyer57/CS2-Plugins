@@ -11,6 +11,7 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
     public override string ModuleVersion => "1.0.0";
 
     private bool _enabled = true;
+    private bool _botNoReload;
 
     private static readonly HashSet<string> ExcludeClasses = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -24,7 +25,13 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
         "weapon_snowball",
         "weapon_bumpmine",
         "weapon_breachcharge",
-        "weapon_xm1014"
+    };
+
+    private static readonly HashSet<string> ShotgunsClasses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "weapon_xm1014",
+        "weapon_nova",
+        "weapon_sawedoff"
     };
 
     // Fallback reserve amount if we can't read a weapon-specific value.
@@ -65,7 +72,7 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
         return HookResult.Continue;
     }
 
-    private static void RefillActiveWeapon(CCSPlayerController player)
+    private void RefillActiveWeapon(CCSPlayerController player)
     {
         var activeWeapon = player.PlayerPawn.Value?.WeaponServices?.ActiveWeapon.Value;
         if (activeWeapon == null || !activeWeapon.IsValid)
@@ -73,7 +80,15 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
         if (IsExcludeWeapon(activeWeapon))
             return;
 
-        activeWeapon.ReserveAmmo[0] = FallbackReserve;
+        var fallbackReserve = FallbackReserve;
+        if (ShotgunsClasses.Contains(activeWeapon.DesignerName))
+            fallbackReserve = 32;
+
+        activeWeapon.ReserveAmmo[0] = fallbackReserve;
+        if (_botNoReload && player.IsBot)
+        {
+            activeWeapon.Clip1 = fallbackReserve;
+        }
     }
 
     private static bool IsExcludeWeapon(CBasePlayerWeapon weapon)
@@ -88,5 +103,12 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
     public void OnInfiniteAmmoCommand(CCSPlayerController? player, CommandInfo command)
     {
         Utility.UseCommand(command, ref _enabled);
+    }
+
+    [ConsoleCommand("css_infiniteammo_botnoreload", "Enable or disable bot no reload")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnBotNoReloadCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        Utility.UseCommand(command, ref _botNoReload);
     }
 }
