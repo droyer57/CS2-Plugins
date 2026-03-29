@@ -73,15 +73,11 @@ public sealed class PlayerState
     {
         foreach (var beam in _beams)
         {
-            beam.Remove();
+            if (beam.IsValid)
+                beam.Remove();
         }
 
-        _worldText?.Remove();
-        _worldText = null;
-
-        _prop?.Remove();
-        _prop = null;
-
+        TryRemoveWorldTextAndProp();
         IsPendingDestroy = true;
     }
 
@@ -130,8 +126,7 @@ public sealed class PlayerState
         DeathAngle = deathAngle;
 
         _beams = Helpers.DrawBeaconCircle(DeathPosition, RevivePlugin.RespawnDistance);
-        _worldText = Helpers.CreateText(DeathPosition + new Vector(0, 0, 32), Controller.PlayerName);
-        _prop = Helpers.CreateProp(DeathPosition + new Vector(0, 0, 48));
+        TryCreateWorldTextAndProp();
     }
 
     private (Vector deathPosition, QAngle deathAngle) GetDeathPositionAndAngle()
@@ -174,7 +169,7 @@ public sealed class PlayerState
             {
                 _playerInZoneCount++;
                 if (_playerInZoneCount == 1)
-                    OnZoneEnter();
+                    TryRemoveWorldTextAndProp();
 
                 isInZone = true;
             }
@@ -182,7 +177,7 @@ public sealed class PlayerState
             {
                 _playerInZoneCount--;
                 if (_playerInZoneCount == 0)
-                    OnZoneExit();
+                    TryCreateWorldTextAndProp();
                 isInZone = false;
             }
 
@@ -213,19 +208,26 @@ public sealed class PlayerState
         }
     }
 
-    private void OnZoneEnter()
-    {
-        _worldText?.Remove();
-        _worldText = null;
-        _prop?.Remove();
-        _prop = null;
-    }
-
-    private void OnZoneExit()
+    private void TryCreateWorldTextAndProp()
     {
         if (_worldText == null || !_worldText.IsValid)
             _worldText = Helpers.CreateText(DeathPosition + new Vector(0, 0, 32), Controller.PlayerName);
         if (_prop == null || !_prop.IsValid)
             _prop = Helpers.CreateProp(DeathPosition + new Vector(0, 0, 48));
+    }
+
+    private void TryRemoveWorldTextAndProp()
+    {
+        if (_worldText?.IsValid == true)
+        {
+            _worldText.Remove();
+            _worldText = null;
+        }
+
+        if (_prop?.IsValid == true)
+        {
+            _prop.Remove();
+            _prop = null;
+        }
     }
 }
