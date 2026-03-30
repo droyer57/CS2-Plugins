@@ -22,6 +22,7 @@ public sealed class BotBuyPlugin : BasePlugin
     private readonly List<string> _poolTRifle = [];
     private readonly List<string> _poolCTRifle = [];
     private bool _isRoundPistol = true;
+    private bool _alwaysPistol;
 
     private readonly HashSet<int> _awpPlayers = [];
     private bool _isEnable = true;
@@ -64,6 +65,9 @@ public sealed class BotBuyPlugin : BasePlugin
             Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
 
             ResetPlayer(player);
+
+            if (_alwaysPistol)
+                _isRoundPistol = true;
 
             var num = _isRoundPistol ? Random.Shared.Next(2) : Random.Shared.Next(3);
 
@@ -217,5 +221,12 @@ public sealed class BotBuyPlugin : BasePlugin
     public void OnBotBuyCommand(CCSPlayerController? player, CommandInfo command)
     {
         Utility.UseCommand(command, ref _isEnable);
+    }
+
+    [ConsoleCommand("css_botbuy_alwayspistol", "Get or set if there is always pistol")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnAlwaysPistolCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        Utility.UseCommand(command, ref _alwaysPistol);
     }
 }
