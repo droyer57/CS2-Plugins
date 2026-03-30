@@ -24,8 +24,6 @@ public sealed class AutoWeaponPlugin : BasePlugin
         {
             _weaponQueue.Clear();
             ReadPool("weapons");
-            Server.ExecuteCommand("css_switchside_midreset 0");
-            Server.ExecuteCommand("css_botbuy 0");
         });
 
         _weaponItems = Utility.WeaponItems;
