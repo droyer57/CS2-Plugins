@@ -25,9 +25,9 @@ public sealed class BotNoHeadshotPlugin : BasePlugin
         if (attackerEntity == null) return HookResult.Continue;
 
         var attackerPawn = new CCSPlayerPawn(attackerEntity.Handle);
-        if (!attackerPawn.IsValid) return HookResult.Continue;
+        if (!attackerPawn.IsValid || attackerPawn.Controller.Value == null) return HookResult.Continue;
 
-        var attackerController = new CCSPlayerController(attackerPawn.Controller.Value!.Handle);
+        var attackerController = new CCSPlayerController(attackerPawn.Controller.Value.Handle);
         if (!attackerController.IsValid || !attackerController.IsBot) return HookResult.Continue;
 
         var activeWeapon = attackerPawn.WeaponServices?.ActiveWeapon.Value;
