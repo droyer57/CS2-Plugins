@@ -15,6 +15,7 @@
   <Project Path="InfiniteAmmo/InfiniteAmmo.csproj" />
   <Project Path="Misc/Misc.csproj" />
   <Project Path="NoTagging/NoTagging.csproj" />
+  <Project Path="OneInTheChamber/OneInTheChamber.csproj" />
   <Project Path="Revive/Revive.csproj" />
   <Project Path="SkinChanger/SkinChanger.csproj" />
   <Project Path="SwitchSide/SwitchSide.csproj" />
