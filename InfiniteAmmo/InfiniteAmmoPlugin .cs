@@ -12,6 +12,7 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
 
     private bool _enabled = true;
     private bool _botNoReload;
+    private bool _botOnly;
 
     private static readonly HashSet<string> ExcludeClasses = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -84,7 +85,11 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
         if (ShotgunsClasses.Contains(activeWeapon.DesignerName))
             fallbackReserve = 32;
 
-        activeWeapon.ReserveAmmo[0] = fallbackReserve;
+        if (!_botOnly || player.IsBot)
+        {
+            activeWeapon.ReserveAmmo[0] = fallbackReserve;
+        }
+
         if (_botNoReload && player.IsBot)
         {
             activeWeapon.Clip1 = fallbackReserve;
@@ -110,5 +115,12 @@ public sealed class InfiniteAmmoPlugin : BasePlugin
     public void OnBotNoReloadCommand(CCSPlayerController? player, CommandInfo command)
     {
         Utility.UseCommand(command, ref _botNoReload);
+    }
+
+    [ConsoleCommand("css_infiniteammo_botonly", "Enable or disable bot only")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnBotOnlyCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        Utility.UseCommand(command, ref _botOnly);
     }
 }
