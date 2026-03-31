@@ -52,57 +52,66 @@ public sealed class AutoWeaponPlugin : BasePlugin
 
         foreach (var player in Utility.Players)
         {
-            if (!player.PawnIsAlive)
-                continue;
-
-            var playerMoney = player.InGameMoneyServices;
-            if (playerMoney == null)
+            if (!player.IsValid || !player.PawnIsAlive)
                 continue;
 
             var keepWeapon = !player.IsBot ? "weapon_knife" : string.Empty;
             player.ResetInventory(this, keepWeapon);
-
-            var weaponTeam = _weaponItems[weaponName].Team;
-            var originalTeam = player.Team;
-
-            if (!player.IsBot && weaponTeam != Team.Shared && (int)weaponTeam != (int)player.Team)
-            {
-                player.SwitchTeam((CsTeam)weaponTeam);
-                player.GiveNamedItem($"weapon_{weaponName}");
-                player.SwitchTeam(originalTeam);
-            }
-            else
-            {
-                player.GiveNamedItem($"weapon_{weaponName}");
-            }
-
-            playerMoney.Account = 0;
-            Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
-
-            var num = !player.IsBot ? 2 : Random.Shared.Next(3);
-            switch (num)
-            {
-                case 1:
-                    player.GiveNamedItem("item_kevlar");
-                    break;
-                case 2:
-                    player.GiveNamedItem("item_assaultsuit");
-                    break;
-            }
-
-            if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
-                player.GiveNamedItem("item_defuser");
-
-            if (!player.IsBot)
-            {
-                for (var i = 0; i < numFlash; i++)
-                    player.GiveNamedItem("weapon_flashbang");
-                if (numGrenade > 0)
-                    player.GiveNamedItem("weapon_hegrenade");
-                if (numMolotov > 0)
-                    player.GiveNamedItem(player.Team == CsTeam.Terrorist ? "weapon_molotov" : "weapon_incgrenade");
-            }
         }
+
+        Server.NextFrame(() =>
+        {
+            foreach (var player in Utility.Players)
+            {
+                if (!player.IsValid || !player.PawnIsAlive)
+                    continue;
+
+                var weaponTeam = _weaponItems[weaponName].Team;
+                var originalTeam = player.Team;
+
+                if (!player.IsBot && weaponTeam != Team.Shared && (int)weaponTeam != (int)player.Team)
+                {
+                    player.SwitchTeam((CsTeam)weaponTeam);
+                    player.GiveNamedItem($"weapon_{weaponName}");
+                    player.SwitchTeam(originalTeam);
+                }
+                else
+                {
+                    player.GiveNamedItem($"weapon_{weaponName}");
+                }
+
+                var playerMoney = player.InGameMoneyServices;
+                if (playerMoney == null)
+                    continue;
+
+                playerMoney.Account = 0;
+                Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
+
+                var num = !player.IsBot ? 2 : Random.Shared.Next(3);
+                switch (num)
+                {
+                    case 1:
+                        player.GiveNamedItem("item_kevlar");
+                        break;
+                    case 2:
+                        player.GiveNamedItem("item_assaultsuit");
+                        break;
+                }
+
+                if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
+                    player.GiveNamedItem("item_defuser");
+
+                if (!player.IsBot)
+                {
+                    for (var i = 0; i < numFlash; i++)
+                        player.GiveNamedItem("weapon_flashbang");
+                    if (numGrenade > 0)
+                        player.GiveNamedItem("weapon_hegrenade");
+                    if (numMolotov > 0)
+                        player.GiveNamedItem(player.Team == CsTeam.Terrorist ? "weapon_molotov" : "weapon_incgrenade");
+                }
+            }
+        });
 
         return HookResult.Continue;
     }
