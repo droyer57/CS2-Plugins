@@ -15,6 +15,7 @@ public sealed class OneInTheChamber : BasePlugin
     private readonly Dictionary<int, CCSWeaponBase> _weapons = [];
     private bool _enabled = true;
     private string _pistolName = "weapon_p250";
+    private bool _teamMode;
 
     public override void Load(bool hotReload)
     {
@@ -69,23 +70,23 @@ public sealed class OneInTheChamber : BasePlugin
         {
             player.ResetInventory(this, "weapon_knife");
 
-            var weapon = player.GiveWeapon(_pistolName);
-            weapon.ReserveAmmo[0] = 0;
-            weapon.Clip1 = 1;
-
-            _weapons.Add(player.Slot, weapon);
-
-            var playerMoney = player.InGameMoneyServices;
-            if (playerMoney == null)
-                continue;
-
-            player.GiveNamedItem("item_assaultsuit");
-
-            if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
-                player.GiveNamedItem("item_defuser");
-
             Server.NextFrame(() =>
             {
+                var weapon = player.GiveWeapon(_pistolName);
+                weapon.ReserveAmmo[0] = 0;
+                weapon.Clip1 = 1;
+
+                _weapons.Add(player.Slot, weapon);
+
+                var playerMoney = player.InGameMoneyServices;
+                if (playerMoney == null)
+                    return;
+
+                player.GiveNamedItem("item_assaultsuit");
+
+                if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
+                    player.GiveNamedItem("item_defuser");
+
                 playerMoney.Account = 0;
                 Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
             });
@@ -110,8 +111,23 @@ public sealed class OneInTheChamber : BasePlugin
 
         Server.NextFrame(() =>
         {
-            weapon.Clip1 = 1;
-            Utilities.SetStateChanged(weapon, "CBasePlayerWeapon", "m_iClip1");
+            if (_teamMode)
+            {
+                foreach (var (slot, currentWeapon) in _weapons)
+                {
+                    var player = Utilities.GetPlayerFromSlot(slot);
+                    if (player == null || !player.IsValid || player.Team != attackerController.Team)
+                        continue;
+
+                    currentWeapon.Clip1 = 1;
+                    Utilities.SetStateChanged(currentWeapon, "CBasePlayerWeapon", "m_iClip1");
+                }
+            }
+            else
+            {
+                weapon.Clip1 = 1;
+                Utilities.SetStateChanged(weapon, "CBasePlayerWeapon", "m_iClip1");
+            }
         });
 
         return HookResult.Continue;
@@ -129,5 +145,12 @@ public sealed class OneInTheChamber : BasePlugin
     public void OnPistolCommand(CCSPlayerController? player, CommandInfo command)
     {
         Utility.UseCommand(command, ref _pistolName);
+    }
+
+    [ConsoleCommand("css_oneinthechamber_team", "Enable or disable the team mode")]
+    [CommandHelper(whoCanExecute: CommandUsage.CLIENT_AND_SERVER)]
+    public void OnTeamCommand(CCSPlayerController? player, CommandInfo command)
+    {
+        Utility.UseCommand(command, ref _teamMode);
     }
 }
