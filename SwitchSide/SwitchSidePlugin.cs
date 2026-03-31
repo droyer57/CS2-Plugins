@@ -28,6 +28,7 @@ public sealed class SwitchSidePlugin : BasePlugin
     public override void Load(bool hotReload)
     {
         RegisterEventHandler<EventRoundStart>(OnRoundStart);
+        RegisterEventHandler<EventRoundPrestart>(OnRoundPrestart);
         RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
         RegisterListener<Listeners.OnMapStart>(_ => Reset());
     }
@@ -150,15 +151,21 @@ public sealed class SwitchSidePlugin : BasePlugin
         if (_teamAScore > stopScore || _teamBScore > stopScore)
         {
             Server.ExecuteCommand("mp_maxrounds 0");
+        }
+
+        return HookResult.Continue;
+    }
+
+    private HookResult OnRoundPrestart(EventRoundPrestart evt, GameEventInfo info)
+    {
+        if (!_isEnable || Utility.IsWarmup || (_teamAScore == 0 && _teamBScore == 0))
+        {
             return HookResult.Continue;
         }
 
-        AddTimer(6.0f, () =>
-        {
-            _teamAIsT = !_teamAIsT;
-            SwapAllPlayers();
-            UpdateScore();
-        }, TimerFlags.STOP_ON_MAPCHANGE);
+        _teamAIsT = !_teamAIsT;
+        SwapAllPlayers();
+        UpdateScore();
 
         return HookResult.Continue;
     }
