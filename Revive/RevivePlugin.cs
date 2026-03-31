@@ -15,6 +15,7 @@ public sealed class RevivePlugin : BasePlugin
     private readonly Dictionary<int, PlayerState> _playerStates = [];
     private float _lastTick;
     private bool _enable = true;
+    private bool _isRoundEnd;
 
     public static float RespawnDistance { get; private set; } = 50;
     public static float RespawnTime { get; private set; } = 10;
@@ -42,12 +43,17 @@ public sealed class RevivePlugin : BasePlugin
             Server.NextFrame(() =>
             {
                 var prop = Helpers.CreateProp(Vector.Zero);
-                AddTimer(5, () => { prop.Remove(); });
+                AddTimer(5, () =>
+                {
+                    if (prop.IsValid)
+                        prop.Remove();
+                });
             });
         });
 
         RegisterEventHandler<EventPlayerHurt>(OnPlayerHurt, HookMode.Pre);
         RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
+        RegisterEventHandler<EventRoundStart>(OnRoundStart);
         RegisterEventHandler<EventRoundEnd>(OnRoundEnd);
 
         RegisterListener<Listeners.OnTick>(OnTick);
@@ -95,12 +101,26 @@ public sealed class RevivePlugin : BasePlugin
         }
     }
 
+    private HookResult OnRoundStart(EventRoundStart evt, GameEventInfo info)
+    {
+        if (!_enable || Utility.IsWarmup)
+        {
+            return HookResult.Continue;
+        }
+
+        _isRoundEnd = false;
+
+        return HookResult.Continue;
+    }
+
     private HookResult OnRoundEnd(EventRoundEnd evt, GameEventInfo info)
     {
         if (!_enable || Utility.IsWarmup)
         {
             return HookResult.Continue;
         }
+
+        _isRoundEnd = true;
 
         foreach (var (_, playerState) in _playerStates)
         {
@@ -162,6 +182,9 @@ public sealed class RevivePlugin : BasePlugin
 
     private PlayerState? GetPlayerState(CCSPlayerController player)
     {
+        if (_isRoundEnd)
+            return null;
+
         var playerPawn = player.PlayerPawn.Value;
         if (playerPawn == null || playerPawn.WeaponServices == null)
             return null;
