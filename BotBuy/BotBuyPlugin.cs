@@ -65,44 +65,53 @@ public sealed class BotBuyPlugin : BasePlugin
             Utilities.SetStateChanged(player, "CCSPlayerController", "m_pInGameMoneyServices");
 
             ResetPlayer(player);
+        }
 
+        Server.NextFrame(() =>
+        {
             if (_alwaysPistol)
                 _isRoundPistol = true;
 
-            var num = _isRoundPistol ? Random.Shared.Next(2) : Random.Shared.Next(3);
-
-            switch (num)
+            foreach (var player in Utility.BotPlayers)
             {
-                case 1:
-                    player.GiveNamedItem("item_kevlar");
-                    break;
-                case 2:
-                    player.GiveNamedItem("item_assaultsuit");
-                    break;
+                if (!player.IsValid || !player.PlayerPawn.IsValid)
+                    continue;
+
+                var num = _isRoundPistol ? Random.Shared.Next(2) : Random.Shared.Next(3);
+
+                switch (num)
+                {
+                    case 1:
+                        player.GiveNamedItem("item_kevlar");
+                        break;
+                    case 2:
+                        player.GiveNamedItem("item_assaultsuit");
+                        break;
+                }
+
+                if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
+                {
+                    player.GiveNamedItem("item_defuser");
+                }
+
+                if (poolQueue.Count == 0)
+                {
+                    poolQueue = GetPoolQueue(player.Team);
+                }
+
+                var weaponName = poolQueue.Dequeue();
+
+                player.GiveNamedItem($"weapon_{weaponName}");
+
+                if (weaponName == "awp")
+                {
+                    _awpPlayers.Add(player.Slot);
+                    AddTimer(1f, () => Utility.PlaySoundToAllPlayers("BotWithAWP"));
+                }
             }
 
-            if (player.Team == CsTeam.CounterTerrorist && !player.HasDefuser())
-            {
-                player.GiveNamedItem("item_defuser");
-            }
-
-            if (poolQueue.Count == 0)
-            {
-                poolQueue = GetPoolQueue(player.Team);
-            }
-
-            var weaponName = poolQueue.Dequeue();
-
-            player.GiveWeapon($"weapon_{weaponName}");
-
-            if (weaponName == "awp")
-            {
-                _awpPlayers.Add(player.Slot);
-                AddTimer(1f, () => Utility.PlaySoundToAllPlayers("BotWithAWP"));
-            }
-        }
-
-        _isRoundPistol = false;
+            _isRoundPistol = false;
+        });
 
         return HookResult.Continue;
     }
@@ -122,7 +131,7 @@ public sealed class BotBuyPlugin : BasePlugin
 
         foreach (var weapon in toRemove)
         {
-            weapon!.AddEntityIOEvent("Kill", weapon, delay: 0.1f);
+            weapon!.Remove();
         }
     }
 
