@@ -13,7 +13,7 @@ public sealed class OneInTheChamber : BasePlugin
     public override string ModuleVersion => "1.0.0";
 
     private readonly Dictionary<int, CCSWeaponBase> _weapons = [];
-    private bool _enabled = true;
+    private bool _enabled;
     private string _pistolName = "weapon_p250";
     private bool _teamMode;
 
