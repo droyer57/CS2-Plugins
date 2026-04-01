@@ -1,7 +1,10 @@
-﻿using CounterStrikeSharp.API.Core;
+﻿using CounterStrikeSharp.API;
+using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Modules.Cvars;
 using CounterStrikeSharp.API.Modules.Utils;
 using Utils;
 using Utils.Data;
+using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 namespace Revive;
 
@@ -36,6 +39,8 @@ public sealed class PlayerState
 
     private static readonly Dictionary<string, WeaponItem> WeaponItems;
 
+    private static Timer? _solidTeammatesTimer;
+
     static PlayerState()
     {
         WeaponItems = Utility.WeaponItems;
@@ -53,6 +58,11 @@ public sealed class PlayerState
 
     private void Respawn()
     {
+        var solidTeammates = ConVar.Find("mp_solid_teammates")?.GetPrimitiveValue<int>() ?? 0;
+        Server.ExecuteCommand("mp_solid_teammates 0");
+        _solidTeammatesTimer?.Kill();
+        _solidTeammatesTimer = _plugin.AddTimer(1, () => Server.ExecuteCommand($"mp_solid_teammates {solidTeammates}"));
+
         Controller.Respawn();
         Controller.PlayerPawn.Value?.Teleport(DeathPosition, DeathAngle, Vector.Zero);
         Controller.ResetInventory(_plugin, "weapon_knife");
