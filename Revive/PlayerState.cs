@@ -61,7 +61,7 @@ public sealed class PlayerState
         var solidTeammates = ConVar.Find("mp_solid_teammates")?.GetPrimitiveValue<int>() ?? 0;
         Server.ExecuteCommand("mp_solid_teammates 0");
         _solidTeammatesTimer?.Kill();
-        _solidTeammatesTimer = _plugin.AddTimer(1, () => Server.ExecuteCommand($"mp_solid_teammates {solidTeammates}"));
+        _solidTeammatesTimer = _plugin.AddTimer(3, () => Server.ExecuteCommand($"mp_solid_teammates {solidTeammates}"));
 
         Controller.Respawn();
         Controller.PlayerPawn.Value?.Teleport(DeathPosition, DeathAngle, Vector.Zero);
