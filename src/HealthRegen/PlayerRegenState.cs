@@ -7,13 +7,13 @@ namespace HealthRegen;
 
 public class PlayerRegenState
 {
-    private readonly HealthRegenPlugin _plugin;
+    private readonly HealthRegen _plugin;
     private readonly int _slot;
 
     private Timer? _startDelayTimer;
     private Timer? _tickTimer;
 
-    public PlayerRegenState(HealthRegenPlugin plugin, int slot)
+    public PlayerRegenState(HealthRegen plugin, int slot)
     {
         _plugin = plugin;
         _slot = slot;

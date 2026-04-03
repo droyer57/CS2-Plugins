@@ -34,11 +34,11 @@ public class C4TimerConfig : BasePluginConfig
     public string ProgressBarColor { get; set; } = "20:yellow, 10:red, 5:darkred";
 }
 
-public class C4TimerPlugin : BasePlugin, IPluginConfig<C4TimerConfig>
+public class C4Timer : BasePlugin, IPluginConfig<C4TimerConfig>
 {
     public override string ModuleName => "C4 Timer";
     public override string ModuleVersion => "1.6";
-    public override string ModuleAuthor => "belom0r";
+    public override string ModuleAuthor => "belom0r (updated by Exec)";
 
     private readonly Dictionary<int, string> _timeColor = new();
     private readonly Dictionary<int, string> _progressBarColor = new();

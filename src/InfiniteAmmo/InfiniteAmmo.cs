@@ -5,10 +5,12 @@ using Utils;
 
 namespace InfiniteAmmo;
 
-public sealed class InfiniteAmmoPlugin : BasePlugin
+public sealed class InfiniteAmmo : BasePlugin
 {
     public override string ModuleName => "InfiniteAmmo";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "Infinite ammo for weapons.";
 
     private bool _enabled = true;
     private bool _botNoReload;

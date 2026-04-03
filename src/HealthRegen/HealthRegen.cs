@@ -5,10 +5,12 @@ using Utils;
 
 namespace HealthRegen;
 
-public sealed class HealthRegenPlugin : BasePlugin, IPluginConfig<HealthRegenConfig>
+public sealed class HealthRegen : BasePlugin, IPluginConfig<HealthRegenConfig>
 {
     public override string ModuleName => "HealthRegen";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "Health regenerates after a short time without taking damage.";
 
     private readonly Dictionary<int, PlayerRegenState> _players = new();
 

@@ -32,7 +32,7 @@ public sealed class PlayerState
     private readonly Dictionary<int, bool> _playerInZone = [];
     private float _propRotation;
 
-    public float DownTimer { get; private set; } = RevivePlugin.DownTime;
+    public float DownTimer { get; private set; } = Revive.DownTime;
     public float RespawnTimer { get; private set; }
 
     public bool SomeoneInZone => _playerInZoneCount > 0;
@@ -135,7 +135,7 @@ public sealed class PlayerState
         DeathPosition = deathPosition;
         DeathAngle = deathAngle;
 
-        _beams = Helpers.DrawBeaconCircle(DeathPosition, RevivePlugin.RespawnDistance);
+        _beams = Helpers.DrawBeaconCircle(DeathPosition, Revive.RespawnDistance);
         TryCreateWorldTextAndProp();
     }
 
@@ -175,7 +175,7 @@ public sealed class PlayerState
                 _playerInZone.Add(player.Slot, isInZone);
             }
 
-            if (distance <= RevivePlugin.RespawnDistance && !isInZone && player.PawnIsAlive)
+            if (distance <= Revive.RespawnDistance && !isInZone && player.PawnIsAlive)
             {
                 _playerInZoneCount++;
                 if (_playerInZoneCount == 1)
@@ -183,7 +183,7 @@ public sealed class PlayerState
 
                 isInZone = true;
             }
-            else if ((distance > RevivePlugin.RespawnDistance || !player.PawnIsAlive) && isInZone)
+            else if ((distance > Revive.RespawnDistance || !player.PawnIsAlive) && isInZone)
             {
                 _playerInZoneCount--;
                 if (_playerInZoneCount == 0)
@@ -197,9 +197,9 @@ public sealed class PlayerState
         if (_playerInZoneCount > 0)
         {
             RespawnTimer += deltaTime;
-            if (RespawnTimer >= RevivePlugin.RespawnTime)
+            if (RespawnTimer >= Revive.RespawnTime)
             {
-                RespawnTimer = RevivePlugin.RespawnTime;
+                RespawnTimer = Revive.RespawnTime;
                 Respawn();
             }
         }

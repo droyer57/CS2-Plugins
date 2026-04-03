@@ -10,10 +10,12 @@ using Utils.Data;
 
 namespace BotBuy;
 
-public sealed class BotBuyPlugin : BasePlugin
+public sealed class BotBuy : BasePlugin
 {
     public override string ModuleName => "BotBuy";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "Give random weapons to bots from a pool each round.";
 
     private Dictionary<string, WeaponItem> _weaponItems = null!;
 

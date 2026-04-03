@@ -3,10 +3,12 @@ using CounterStrikeSharp.API.Core;
 
 namespace NoTagging;
 
-public sealed class NoTaggingPlugin : BasePlugin
+public sealed class NoTagging : BasePlugin
 {
-    public override string ModuleName => "NoTaggingPlugin";
+    public override string ModuleName => "NoTagging";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "Disable damage tagging.";
 
     public override void Load(bool hotReload)
     {

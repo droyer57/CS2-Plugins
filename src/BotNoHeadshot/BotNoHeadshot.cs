@@ -2,10 +2,12 @@
 
 namespace BotNoHeadshot;
 
-public sealed class BotNoHeadshotPlugin : BasePlugin
+public sealed class BotNoHeadshot : BasePlugin
 {
     public override string ModuleName => "BotNoHeadshot";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "Prevent bots from inflicting headshot damage.";
 
     public override void Load(bool hotReload)
     {

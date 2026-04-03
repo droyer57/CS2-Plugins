@@ -8,10 +8,12 @@ using Utils.Data;
 
 namespace AutoWeapon;
 
-public sealed class AutoWeaponPlugin : BasePlugin
+public sealed class AutoWeapon : BasePlugin
 {
     public override string ModuleName => "AutoWeapon";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "Give random weapons to all players from a pool each round.";
 
     private Queue<string> _weaponQueue = [];
     private readonly List<string> _weapons = [];

@@ -5,11 +5,12 @@ using CounterStrikeSharp.API.Modules.Utils;
 
 namespace BotRandomizer;
 
-public sealed class BotRandomizerPlugin : BasePlugin
+public sealed class BotRandomizer : BasePlugin
 {
     public override string ModuleName => "BotRandomizer";
-    public override string ModuleVersion => "1.0.0";
+    public override string ModuleVersion => "1.0.4";
     public override string ModuleDescription => "Randomize agent model and music kit for bots";
+    public override string ModuleAuthor => "ed0ard (updated by Exec)";
 
     private readonly Random _rng = new();
     private readonly Dictionary<int, string[]> _botModels = new();
@@ -25,7 +26,7 @@ public sealed class BotRandomizerPlugin : BasePlugin
         "characters\\models\\ctm_diver\\ctm_diver_variantc.vmdl",
         "characters\\models\\ctm_fbi\\ctm_fbi.vmdl",
         "characters\\models\\ctm_fbi\\ctm_fbi_varianta.vmdl",
-        // "characters\\models\\ctm_fbi\\ctm_fbi_variantb.vmdl",
+        "characters\\models\\ctm_fbi\\ctm_fbi_variantb.vmdl",
         "characters\\models\\ctm_fbi\\ctm_fbi_variantc.vmdl",
         "characters\\models\\ctm_fbi\\ctm_fbi_variantd.vmdl",
         "characters\\models\\ctm_fbi\\ctm_fbi_variante.vmdl",
@@ -51,20 +52,20 @@ public sealed class BotRandomizerPlugin : BasePlugin
         "characters\\models\\ctm_swat\\ctm_swat_variante.vmdl",
         "characters\\models\\ctm_swat\\ctm_swat_variantf.vmdl",
         "characters\\models\\ctm_swat\\ctm_swat_variantg.vmdl",
-        // "characters\\models\\ctm_swat\\ctm_swat_varianth.vmdl",
+        "characters\\models\\ctm_swat\\ctm_swat_varianth.vmdl",
         "characters\\models\\ctm_swat\\ctm_swat_varianti.vmdl",
-        // "characters\\models\\ctm_swat\\ctm_swat_variantj.vmdl",
+        "characters\\models\\ctm_swat\\ctm_swat_variantj.vmdl",
         "characters\\models\\ctm_swat\\ctm_swat_variantk.vmdl",
     };
 
     private static readonly string[] TModels =
     {
         "characters\\models\\tm_balkan\\tm_balkan_variantf.vmdl",
-        // "characters\\models\\tm_balkan\\tm_balkan_variantg.vmdl",
+        "characters\\models\\tm_balkan\\tm_balkan_variantg.vmdl",
         "characters\\models\\tm_balkan\\tm_balkan_varianth.vmdl",
         "characters\\models\\tm_balkan\\tm_balkan_varianti.vmdl",
         "characters\\models\\tm_balkan\\tm_balkan_variantj.vmdl",
-        // "characters\\models\\tm_balkan\\tm_balkan_variantk.vmdl",
+        "characters\\models\\tm_balkan\\tm_balkan_variantk.vmdl",
         "characters\\models\\tm_balkan\\tm_balkan_variantl.vmdl",
         "characters\\models\\tm_jumpsuit\\tm_jumpsuit_varianta.vmdl",
         "characters\\models\\tm_jumpsuit\\tm_jumpsuit_variantb.vmdl",
@@ -76,7 +77,7 @@ public sealed class BotRandomizerPlugin : BasePlugin
         "characters\\models\\tm_jungle_raider\\tm_jungle_raider_variantd.vmdl",
         "characters\\models\\tm_jungle_raider\\tm_jungle_raider_variante.vmdl",
         "characters\\models\\tm_jungle_raider\\tm_jungle_raider_variantf.vmdl",
-        // "characters\\models\\tm_jungle_raider\\tm_jungle_raider_variantf2.vmdl",
+        "characters\\models\\tm_jungle_raider\\tm_jungle_raider_variantf2.vmdl",
         "characters\\models\\tm_leet\\tm_leet_varianta.vmdl",
         "characters\\models\\tm_leet\\tm_leet_variantb.vmdl",
         "characters\\models\\tm_leet\\tm_leet_variantc.vmdl",

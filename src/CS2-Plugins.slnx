@@ -1,20 +1,20 @@
 <Solution>
   <Folder Name="/bots/">
+    <Project Path="BotAI/BotAI.csproj" />
     <Project Path="BotBuy/BotBuy.csproj" />
     <Project Path="BotNoHeadshot/BotNoHeadshot.csproj" />
     <Project Path="BotRandomizer/BotRandomizer.csproj" />
-  </Folder>
-  <Folder Name="/vendors/">
-    <Project Path="BotAI/BotAI.csproj" />
     <Project Path="BotState/BotState.csproj" />
-    <Project Path="C4Timer/C4Timer.csproj" />
   </Folder>
-  <Project Path="AutoWeapon/AutoWeapon.csproj" />
+  <Folder Name="/mods/">
+    <Project Path="AutoWeapon/AutoWeapon.csproj" />
+    <Project Path="OneInTheChamber/OneInTheChamber.csproj" />
+  </Folder>
+  <Project Path="C4Timer/C4Timer.csproj" />
   <Project Path="HealthRegen/HealthRegen.csproj" />
   <Project Path="InfiniteAmmo/InfiniteAmmo.csproj" />
   <Project Path="Misc/Misc.csproj" />
   <Project Path="NoTagging/NoTagging.csproj" />
-  <Project Path="OneInTheChamber/OneInTheChamber.csproj" />
   <Project Path="Revive/Revive.csproj" />
   <Project Path="SkinChanger/SkinChanger.csproj" />
   <Project Path="SwitchSide/SwitchSide.csproj" />

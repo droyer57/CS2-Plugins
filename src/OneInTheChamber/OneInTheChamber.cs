@@ -11,6 +11,8 @@ public sealed class OneInTheChamber : BasePlugin
 {
     public override string ModuleName => "OneInTheChamber";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "One pistol, one bullet. Instant kill. Bullet is restored on kill.";
 
     private readonly Dictionary<int, CCSWeaponBase> _weapons = [];
     private bool _enabled;

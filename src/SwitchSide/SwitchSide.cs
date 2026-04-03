@@ -9,10 +9,12 @@ using Utils;
 
 namespace SwitchSide;
 
-public sealed class SwitchSidePlugin : BasePlugin
+public sealed class SwitchSide : BasePlugin
 {
     public override string ModuleName => "SwitchSide";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "Switch sides each round.";
 
     private int _teamAScore;
     private int _teamBScore;

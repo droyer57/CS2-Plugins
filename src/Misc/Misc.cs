@@ -7,10 +7,12 @@ using Utils;
 
 namespace Misc;
 
-public sealed class MiscPlugin : BasePlugin
+public sealed class Misc : BasePlugin
 {
     public override string ModuleName => "Misc";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "Adds miscellaneous gameplay features.";
 
     [GameEventHandler]
     public HookResult OnRoundStart(EventRoundStart evt, GameEventInfo info)

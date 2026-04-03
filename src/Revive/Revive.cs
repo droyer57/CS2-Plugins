@@ -7,10 +7,12 @@ using Utils;
 
 namespace Revive;
 
-public sealed class RevivePlugin : BasePlugin
+public sealed class Revive : BasePlugin
 {
     public override string ModuleName => "Revive";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "Revive dead teammates.";
 
     private readonly Dictionary<int, PlayerState> _playerStates = [];
     private float _lastTick;

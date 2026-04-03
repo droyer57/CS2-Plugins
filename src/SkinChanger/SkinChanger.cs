@@ -6,10 +6,12 @@ using Utils;
 
 namespace SkinChanger;
 
-public sealed class SkinChangerPlugin : BasePlugin
+public sealed class SkinChanger : BasePlugin
 {
     public override string ModuleName => "SkinChanger";
     public override string ModuleVersion => "1.0.0";
+    public override string ModuleAuthor => "Exec";
+    public override string ModuleDescription => "Set skin for specific players.";
 
     private static readonly Dictionary<ulong, string[]> Models = new()
     {
