@@ -1,0 +1,18 @@
+<Project>
+
+    <Import Project="$(MSBuildThisFileDirectory)Directory.Build.user.targets"
+            Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.user.targets')" />
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent"
+            Condition="'$(CS2PluginsPath)' != ''">
+        <ItemGroup>
+            <PluginDlls Include="$(TargetDir)*.dll" />
+        </ItemGroup>
+
+        <MakeDir Directories="$(CS2PluginsPath)$(AssemblyName)\" />
+
+        <Copy SourceFiles="@(PluginDlls)"
+              DestinationFolder="$(CS2PluginsPath)$(AssemblyName)\" />
+    </Target>
+
+</Project>
