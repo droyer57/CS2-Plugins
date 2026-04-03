@@ -133,4 +133,9 @@ public static class Utility
         UseCommand(command, ref value);
         return value;
     }
+
+    public static string GetCfgDirectory(string moduleDirectory)
+    {
+        return Path.GetFullPath(Path.Combine(moduleDirectory, "..", "..", "..", "..", "cfg"));
+    }
 }

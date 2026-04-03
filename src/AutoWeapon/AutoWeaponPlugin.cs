@@ -118,10 +118,11 @@ public sealed class AutoWeaponPlugin : BasePlugin
 
     private void ReadPool(string filename)
     {
-        var filePath = Path.Combine(ModuleDirectory, $"{filename}.pool");
+        var filePath = Path.Combine(Utility.GetCfgDirectory(ModuleDirectory), "plugins", "AutoWeapon",
+            $"{filename}.pool");
         if (!File.Exists(filePath))
         {
-            return;
+            throw new FileNotFoundException(filePath);
         }
 
         _weapons.Clear();
