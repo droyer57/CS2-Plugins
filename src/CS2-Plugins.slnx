@@ -1,7 +1,6 @@
 <Solution>
   <Folder Name="/bots/">
     <Project Path="BotBuy/BotBuy.csproj" />
-    <Project Path="BotInfiniteMoney/BotInfiniteMoney.csproj" />
     <Project Path="BotNoHeadshot/BotNoHeadshot.csproj" />
     <Project Path="BotRandomizer/BotRandomizer.csproj" />
   </Folder>
