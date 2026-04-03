@@ -1,0 +1,71 @@
+name: Release Plugins
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag"
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    env:
+      PLUGINS: >-
+        AutoWeapon BotAI BotBuy BotNoHeadshot BotRandomizer
+        BotState C4Timer HealthRegen InfiniteAmmo Misc NoTagging
+        OneInTheChamber Revive SkinChanger SwitchSide
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build plugins
+        run: |
+          for PLUGIN in $PLUGINS; do
+            echo "Building $PLUGIN..."
+            dotnet build "src/$PLUGIN/$PLUGIN.csproj" \
+              -c Release \
+              --no-self-contained \
+              -o "output/$PLUGIN"
+          done
+
+      - name: Package plugins into zip
+        run: |
+          mkdir -p dist
+          for PLUGIN in $PLUGINS; do
+            mkdir -p "dist/$PLUGIN"
+            cp output/$PLUGIN/*.dll "dist/$PLUGIN/"
+          done
+
+          cd dist
+          zip -r ../plugins.zip .
+          cd ..
+
+      - name: Determine release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          files: plugins.zip
+          draft: true
