@@ -175,7 +175,7 @@ public sealed class PlayerState
                 _playerInZone.Add(player.Slot, isInZone);
             }
 
-            if (distance <= RevivePlugin.RespawnDistance && !isInZone)
+            if (distance <= RevivePlugin.RespawnDistance && !isInZone && player.PawnIsAlive)
             {
                 _playerInZoneCount++;
                 if (_playerInZoneCount == 1)
@@ -183,7 +183,7 @@ public sealed class PlayerState
 
                 isInZone = true;
             }
-            else if (distance > RevivePlugin.RespawnDistance && isInZone)
+            else if ((distance > RevivePlugin.RespawnDistance || !player.PawnIsAlive) && isInZone)
             {
                 _playerInZoneCount--;
                 if (_playerInZoneCount == 0)
