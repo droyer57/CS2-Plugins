@@ -11,16 +11,13 @@ public sealed class SkinChangerPlugin : BasePlugin
     public override string ModuleName => "SkinChanger";
     public override string ModuleVersion => "1.0.0";
 
-    // Exec => 76561198018247650
-    // Bipce => 76561198041968571
-
     private static readonly Dictionary<ulong, string[]> Models = new()
     {
         {
-            76561198041968571,
+            76561198041968571, // Steam ID
             [
-                @"characters\models\tm_jungle_raider\tm_jungle_raider_variantf2.vmdl",
-                @"characters\models\ctm_fbi\ctm_fbi_variantb.vmdl"
+                @"characters\models\tm_jungle_raider\tm_jungle_raider_variantf2.vmdl", // T model
+                @"characters\models\ctm_fbi\ctm_fbi_variantb.vmdl" // CT model
             ]
         }
     };
